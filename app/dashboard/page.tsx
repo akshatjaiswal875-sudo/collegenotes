@@ -102,7 +102,7 @@ export default function StudentDashboard() {
         <div className="mt-auto pt-6 border-t border-indigo-800">
           <div className="flex items-center gap-3 mb-4 px-2">
             {session?.user?.image ? (
-              <img src={session4 md:p-8 overflow-y-auto min-h-screen pt-16 md:pt-8 className="w-8 h-8 rounded-full" />
+              <img src={session.user.image} className="w-8 h-8 rounded-full" />
             ) : (
               <div className="w-8 h-8 bg-indigo-700 rounded-full flex items-center justify-center">
                 {session?.user?.name?.[0] || "U"}
