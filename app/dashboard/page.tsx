@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical } from "lucide-react";
+import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X } from "lucide-react";
 
 export default function StudentDashboard() {
   const { data: session, status } = useSession();
@@ -14,6 +14,7 @@ export default function StudentDashboard() {
   const [notes, setNotes] = useState<any[]>([]);
   const [filter, setFilter] = useState<"ALL" | "NOTE" | "QP" | "ASSIGNMENT" | "PRACTICAL">("ALL");
   const [search, setSearch] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
@@ -48,23 +49,44 @@ export default function StudentDashboard() {
   if (status === "loading") return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row relative">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="md:hidden fixed top-4 left-4 z-50 bg-indigo-900 text-white p-2 rounded-lg shadow-lg"
+      >
+        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="w-full md:w-72 bg-indigo-900 text-white p-6 flex flex-col h-screen sticky top-0">
-        <div className="flex items-center gap-3 mb-8">
+      <div className={`fixed md:sticky top-0 h-screen w-72 bg-indigo-900 text-white p-6 flex flex-col z-40 transition-transform duration-300 ease-in-out ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      }`}>
+        <div className="flex items-center gap-3 mb-8 mt-12 md:mt-0">
           <div className="bg-white/10 p-2 rounded-lg">
             <GraduationCap size={24} />
           </div>
           <h1 className="text-xl font-bold">Student Portal</h1>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-6 flex-1 overflow-hidden flex flex-col">
           <h2 className="text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-4">Subjects</h2>
-          <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-250px)] pr-2 custom-scrollbar">
+          <div className="space-y-2 overflow-y-auto pr-2 custom-scrollbar">
             {subjects.map(s => (
               <button
                 key={s.id}
-                onClick={() => setSelectedSubject(s.id)}
+                onClick={() => {
+                  setSelectedSubject(s.id);
+                  setSidebarOpen(false);
+                }}
                 className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                   selectedSubject === s.id 
                     ? "bg-white text-indigo-900 font-medium shadow-lg" 
@@ -80,7 +102,7 @@ export default function StudentDashboard() {
         <div className="mt-auto pt-6 border-t border-indigo-800">
           <div className="flex items-center gap-3 mb-4 px-2">
             {session?.user?.image ? (
-              <img src={session.user.image} alt="Profile" className="w-8 h-8 rounded-full" />
+              <img src={session4 md:p-8 overflow-y-auto min-h-screen pt-16 md:pt-8 className="w-8 h-8 rounded-full" />
             ) : (
               <div className="w-8 h-8 bg-indigo-700 rounded-full flex items-center justify-center">
                 {session?.user?.name?.[0] || "U"}
