@@ -200,5 +200,4 @@ export default function StudentDashboard() {
     </div>
   );
 }
-  </div>
     
