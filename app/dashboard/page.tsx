@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 export default function StudentDashboard() {
   const { data: session, status } = useSession();
@@ -48,17 +49,12 @@ export default function StudentDashboard() {
   if (status === "loading") return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <div className="w-full md:w-72 bg-indigo-900 text-white p-6 flex flex-col h-screen sticky top-0">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-white/10 p-2 rounded-lg">
-            <GraduationCap size={24} />
-          </div>
-          <h1 className="text-xl font-bold">Student Portal</h1>
-        </div>
-
-        <div className="mb-6">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar title="Student Portal" />
+      <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-full md:w-72 bg-indigo-900 text-white p-6 flex flex-col h-full overflow-y-auto">
+          <div className="mb-6">
           <h2 className="text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-4">Subjects</h2>
           <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-250px)] pr-2 custom-scrollbar">
             {subjects.map(s => (
@@ -82,31 +78,10 @@ export default function StudentDashboard() {
             {session?.user?.image ? (
               <img src={session.user.image} alt="Profile" className="w-8 h-8 rounded-full" />
             ) : (
-              <div className="w-8 h-8 bg-indigo-700 rounded-full flex items-center justify-center">
-                {session?.user?.name?.[0] || "U"}
-              </div>
-            )}
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate">{session?.user?.name}</p>
-              <p className="text-xs text-indigo-300 truncate">{session?.user?.email}</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="w-full flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-indigo-800 text-indigo-200 transition-colors text-sm"
-          >
-            <LogOut size={16} /> Sign Out
-          </button>
-        </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8 overflow-y-auto h-screen">
-        {!selectedSubject ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400">
-            <Book size={64} className="mb-4 text-gray-300" />
-            <h2 className="text-2xl font-bold text-gray-600">Select a subject to view notes</h2>
-            <p>Choose from the list on the left to get started</p>
+      <div className="flex-1 p-8 overflow-y-auto h-fullarted</p>
           </div>
         ) : (
           <div className="max-w-5xl mx-auto">
@@ -180,7 +155,7 @@ export default function StudentDashboard() {
                       <div className={`p-3 rounded-lg ${
                         note.type === 'QP' ? 'bg-orange-100 text-orange-600' : 
                         note.type === 'ASSIGNMENT' ? 'bg-purple-100 text-purple-600' :
-                        note.type === 'PRACTICAL' ? 'bg-green-100 text-green-600' :
+                        note.type === 'PRACTICAL' ? 'bg-green-100 text-green-600' : text-gray-900
                         'bg-blue-100 text-blue-600'
                       }`}>
                         {note.type === 'QP' ? <FileText size={24} /> : 
@@ -225,3 +200,5 @@ export default function StudentDashboard() {
     </div>
   );
 }
+  </div>
+    

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, Upload, Book, Users, LogOut, Plus } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -59,11 +60,12 @@ export default function AdminDashboard() {
   if (status === "loading") return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-gray-800 p-6 flex flex-col">
-        <h2 className="text-2xl font-bold mb-8 text-indigo-400">Admin Panel</h2>
-        <nav className="flex-1 space-y-2">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      <Navbar title="Admin Panel" />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-64 bg-gray-800 p-6 flex flex-col h-full overflow-y-auto">
+          <nav className="flex-1 space-y-2 mt-4">
           <button
             onClick={() => setActiveTab("overview")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === "overview" ? "bg-indigo-600" : "hover:bg-gray-700"}`}
@@ -83,16 +85,13 @@ export default function AdminDashboard() {
             <Book size={20} /> Subjects
           </button>
         </nav>
-        <button onClick={() => router.push("/")} className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white">
-          <LogOut size={20} /> Exit
-        </button>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 p-8 overflow-y-auto">
         <AnimatePresence mode="wait">
           {activeTab === "overview" && (
-            <motion.div
+            <motion.div h-full
               key="overview"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -265,6 +264,7 @@ export default function AdminDashboard() {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
       </div>
     </div>
   );
