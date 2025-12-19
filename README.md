@@ -1,5 +1,7 @@
 # College Notes Portal
 
+A comprehensive platform for students to access lecture notes, question papers, and study materials.
+
 ## Getting Started
 
 ### Prerequisites
