@@ -181,7 +181,7 @@ export default function StudentDashboard() {
               <input
                 type="text"
                 placeholder="Search by chapter or title..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none shadow-sm"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none shadow-sm bg-white text-gray-900"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
