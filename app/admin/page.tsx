@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState<any>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [activeUsers, setActiveUsers] = useState<any[]>([]);
   
   // Forms
   const [noteForm, setNoteForm] = useState({ title: "", chapter: "", driveLink: "", subjectId: "", type: "NOTE" });
@@ -24,11 +25,17 @@ export default function AdminDashboard() {
     
     fetchStats();
     fetchSubjects();
+    fetchActiveUsers();
   }, [status, session, router]);
 
   const fetchStats = async () => {
     const res = await fetch("/api/stats");
     if (res.ok) setStats(await res.json());
+  };
+
+  const fetchActiveUsers = async () => {
+    const res = await fetch("/api/admin/users");
+    if (res.ok) setActiveUsers(await res.json());
   };
 
   const fetchSubjects = async () => {
@@ -116,18 +123,45 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 mt-8">
-                <h3 className="text-xl font-bold mb-4">Recent Visitors</h3>
-                <div className="space-y-4">
-                  {stats?.recentVisits?.map((visit: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{visit.user.name}</p>
-                        <p className="text-sm text-gray-400">{visit.user.email}</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                  <h3 className="text-xl font-bold mb-4">Recent Visitors</h3>
+                  <div className="space-y-4">
+                    {stats?.recentVisits?.map((visit: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                        <div>
+                          <p className="font-medium">{visit.user.name}</p>
+                          <p className="text-sm text-gray-400">{visit.user.email}</p>
+                        </div>
+                        <span className="text-sm text-gray-400">{new Date(visit.timestamp).toLocaleString()}</span>
                       </div>
-                      <span className="text-sm text-gray-400">{new Date(visit.timestamp).toLocaleString()}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                  <h3 className="text-xl font-bold mb-4">Currently Active Users</h3>
+                  <div className="space-y-4">
+                    {activeUsers.map((user: any) => (
+                      <div key={user.id} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {user.image ? (
+                            <img src={user.image} alt={user.name} className="w-8 h-8 rounded-full" />
+                          ) : (
+                            <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-xs">
+                              {user.name?.[0]}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium">{user.name}</p>
+                            <p className="text-sm text-gray-400">{user.email}</p>
+                          </div>
+                        </div>
+                        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Online</span>
+                      </div>
+                    ))}
+                    {activeUsers.length === 0 && <p className="text-gray-400">No active users found.</p>}
+                  </div>
                 </div>
               </div>
             </motion.div>

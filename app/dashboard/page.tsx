@@ -19,6 +19,11 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
     fetchSubjects();
+    
+    // Open sidebar on mobile by default so students can see subjects immediately
+    if (window.innerWidth < 768) {
+      setSidebarOpen(true);
+    }
   }, [status, router]);
 
   useEffect(() => {
