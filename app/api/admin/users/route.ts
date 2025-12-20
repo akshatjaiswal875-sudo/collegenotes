@@ -29,8 +29,7 @@ export async function GET() {
         name: true,
         email: true,
         image: true,
-        role: true,
-        lastLogin: false // Prisma schema doesn't have lastLogin on User, but we can infer from Session or VisitLog if needed.
+        role: true
       }
     });
 
