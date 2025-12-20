@@ -250,7 +250,7 @@ export default function AdminDashboard() {
 
                 <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
                   <h3 className="text-xl font-bold mb-4">Existing Subjects</h3>
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  <div className="space-y-2 max-h-100 overflow-y-auto">
                     {subjects.map(s => (
                       <div key={s.id} className="p-3 bg-gray-700/50 rounded-lg flex justify-between items-center">
                         <span className="font-medium">{s.name}</span>

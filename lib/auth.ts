@@ -57,8 +57,14 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signIn({ user }) {
-      // Auto-promote specific admin email
-      if (user.email === "akshatjaiswal875@gmail.com") {
+      // Auto-promote specific admin emails
+      const adminEmails = [
+        "akshatjaiswal875@gmail.com", 
+        "madankarmayank08@gmail.com", 
+        "balkrishana26@gmail.com"
+      ];
+      
+      if (user.email && adminEmails.includes(user.email)) {
         try {
           await prisma.user.update({
             where: { email: user.email },
