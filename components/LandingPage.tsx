@@ -7,64 +7,28 @@ import { BookOpen, GraduationCap, Library, ClipboardList, FlaskConical } from "l
 export default function LandingPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white overflow-hidden relative">
-      {/* Background Elements */}
+      {/* Background Elements - Optimized for Mobile */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 20, repeat: Infinity }}
-          className="absolute -top-1/2 -left-1/2 w-full h-full bg-blue-500/20 rounded-full blur-3xl"
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.5, 1],
-            rotate: [0, -90, 0],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{ duration: 25, repeat: Infinity }}
-          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-purple-500/20 rounded-full blur-3xl"
-        />
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
       </div>
 
       <div className="z-10 max-w-4xl w-full text-center space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="flex justify-center mb-8"
-        >
+        <div className="flex justify-center mb-8">
           <div className="bg-white/10 p-6 rounded-full backdrop-blur-lg border border-white/20">
             <GraduationCap size={64} className="text-blue-300" />
           </div>
-        </motion.div>
+        </div>
 
-        <motion.h1
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-          className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-purple-200"
-        >
+        <h1 className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-purple-200">
           College Notes Portal
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="text-xl text-gray-300 max-w-2xl mx-auto"
-        >
+        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
           Access lecture notes, previous year question papers, and study materials in one place.
-        </motion.p>
+        </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-12"
-        >
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-12">
           <button
             onClick={() => signIn("google")}
             className="group relative px-8 py-4 bg-white text-indigo-900 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-105 flex items-center gap-3"
@@ -73,16 +37,9 @@ export default function LandingPage() {
             Sign in with Google
             <div className="absolute inset-0 rounded-xl ring-2 ring-white/50 group-hover:ring-4 transition-all" />
           </button>
+        </div>
 
-
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16 text-left"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16 text-left">
           {[
             { icon: BookOpen, title: "Lecture Notes", desc: "Organized by subject and chapter" },
             { icon: Library, title: "Question Papers", desc: "Previous years archive" },
@@ -95,7 +52,7 @@ export default function LandingPage() {
               <p className="text-gray-400">{item.desc}</p>
             </div>
           ))}
-        </motion.div>
+        </div>
 
         <footer className="mt-20 text-gray-400 text-sm pb-8">
           <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">
