@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Upload, Book, Users, LogOut, Plus } from "lucide-react";
+import { BarChart3, Upload, Book, Users, LogOut, Plus, FileText, Edit, Trash2, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 export default function AdminDashboard() {
@@ -14,10 +14,12 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
   
   // Forms
   const [noteForm, setNoteForm] = useState({ title: "", chapter: "", driveLink: "", subjectId: "", type: "NOTE" });
   const [subjectForm, setSubjectForm] = useState({ name: "", code: "" });
+  const [editingNote, setEditingNote] = useState<any>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
@@ -27,6 +29,12 @@ export default function AdminDashboard() {
     fetchSubjects();
     fetchActiveUsers();
   }, [status, session, router]);
+
+  useEffect(() => {
+    if (activeTab === "manage-notes") {
+      fetchNotes();
+    }
+  }, [activeTab]);
 
   const fetchStats = async () => {
     const res = await fetch("/api/stats");
@@ -41,6 +49,11 @@ export default function AdminDashboard() {
   const fetchSubjects = async () => {
     const res = await fetch("/api/subjects");
     if (res.ok) setSubjects(await res.json());
+  };
+
+  const fetchNotes = async () => {
+    const res = await fetch("/api/notes");
+    if (res.ok) setNotes(await res.json());
   };
 
   const handleUploadNote = async (e: React.FormEvent) => {
@@ -64,6 +77,22 @@ export default function AdminDashboard() {
     fetchSubjects();
   };
 
+  const handleDeleteNote = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this note?")) return;
+    await fetch(`/api/notes?id=${id}`, { method: "DELETE" });
+    fetchNotes();
+  };
+
+  const handleUpdateNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetch("/api/notes", {
+      method: "PUT",
+      body: JSON.stringify(editingNote),
+    });
+    setEditingNote(null);
+    fetchNotes();
+  };
+
   if (status === "loading") return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
 
   return (
@@ -84,6 +113,12 @@ export default function AdminDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === "upload" ? "bg-indigo-600" : "hover:bg-gray-700"}`}
           >
             <Upload size={20} /> Upload Notes
+          </button>
+          <button
+            onClick={() => setActiveTab("manage-notes")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === "manage-notes" ? "bg-indigo-600" : "hover:bg-gray-700"}`}
+          >
+            <FileText size={20} /> Manage Notes
           </button>
           <button
             onClick={() => setActiveTab("subjects")}
@@ -245,6 +280,67 @@ export default function AdminDashboard() {
             </motion.div>
           )}
 
+          {activeTab === "manage-notes" && (
+            <motion.div
+              key="manage-notes"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <h1 className="text-3xl font-bold mb-6">Manage Notes</h1>
+              <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-700/50 text-gray-400">
+                      <tr>
+                        <th className="p-4">Title</th>
+                        <th className="p-4">Subject</th>
+                        <th className="p-4">Type</th>
+                        <th className="p-4">Chapter</th>
+                        <th className="p-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700">
+                      {notes.map((note) => (
+                        <tr key={note.id} className="hover:bg-gray-700/30">
+                          <td className="p-4 font-medium">{note.title}</td>
+                          <td className="p-4 text-gray-300">{note.subject?.name}</td>
+                          <td className="p-4">
+                            <span className="px-2 py-1 bg-indigo-500/20 text-indigo-300 text-xs rounded-full">
+                              {note.type}
+                            </span>
+                          </td>
+                          <td className="p-4 text-gray-400">{note.chapter}</td>
+                          <td className="p-4 flex gap-2">
+                            <button
+                              onClick={() => setEditingNote(note)}
+                              className="p-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteNote(note.id)}
+                              className="p-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {notes.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="p-8 text-center text-gray-500">
+                            No notes found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === "subjects" && (
             <motion.div
               key="subjects"
@@ -300,6 +396,82 @@ export default function AdminDashboard() {
         </AnimatePresence>
       </div>
       </div>
+      {/* Edit Note Modal */}
+      {editingNote && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">Edit Note</h2>
+              <button
+                onClick={() => setEditingNote(null)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateNote} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={editingNote.title}
+                  onChange={(e) =>
+                    setEditingNote({ ...editingNote, title: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Chapter
+                </label>
+                <input
+                  type="text"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={editingNote.chapter || ""}
+                  onChange={(e) =>
+                    setEditingNote({ ...editingNote, chapter: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Type
+                </label>
+                <select
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={editingNote.type}
+                  onChange={(e) =>
+                    setEditingNote({ ...editingNote, type: e.target.value })
+                  }
+                >
+                  <option value="NOTES">Notes</option>
+                  <option value="PYQ">PYQ</option>
+                  <option value="SAMPLE_PAPER">Sample Paper</option>
+                </select>
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingNote(null)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
