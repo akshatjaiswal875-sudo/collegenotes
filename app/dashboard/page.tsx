@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock } from "lucide-react";
+import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
 
 export default function StudentDashboard() {
@@ -13,6 +13,7 @@ export default function StudentDashboard() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [notes, setNotes] = useState<any[]>([]);
+  const [recentNotes, setRecentNotes] = useState<any[]>([]);
   const [filter, setFilter] = useState<"ALL" | "NOTE" | "QP" | "ASSIGNMENT" | "PRACTICAL">("ALL");
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,6 +21,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
     fetchSubjects();
+    fetchRecentNotes();
     
     // Open sidebar on mobile by default so students can see subjects immediately
     if (window.innerWidth < 768) {
@@ -38,6 +40,14 @@ export default function StudentDashboard() {
   const fetchSubjects = async () => {
     const res = await fetch("/api/subjects");
     if (res.ok) setSubjects(await res.json());
+  };
+
+  const fetchRecentNotes = async () => {
+    const res = await fetch("/api/notes");
+    if (res.ok) {
+      const data = await res.json();
+      setRecentNotes(data.slice(0, 5)); // Keep top 5
+    }
   };
 
   const fetchNotes = async (subjectId: string) => {
@@ -138,22 +148,127 @@ export default function StudentDashboard() {
       {/* Main Content */}
       <div className="flex-1 p-6 md:p-10 overflow-y-auto h-screen bg-gray-50/50">
         {!selectedSubject ? (
-          <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto">
-            <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-8 animate-pulse">
-              <BookOpen size={48} className="text-indigo-600" />
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-10">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {(session?.user?.name || "Student").split(' ')[0]}! 👋</h1>
+              <p className="text-gray-500">Here's what's happening in your courses.</p>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">Welcome to Your Dashboard</h2>
-            <p className="text-gray-500 text-lg mb-8">Select a subject from the sidebar to access notes, question papers, and assignments.</p>
-            <div className="grid grid-cols-2 gap-4 w-full">
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg mb-2"><FileText size={20} /></div>
-                <span className="font-medium text-gray-700">Notes</span>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                    <Book size={24} />
+                  </div>
+                  <div>
+                    <p className="text-indigo-100 text-sm font-medium">Total Subjects</p>
+                    <h3 className="text-2xl font-bold">{subjects.length}</h3>
+                  </div>
+                </div>
+                <p className="text-xs text-indigo-100/80">Access all your course materials</p>
               </div>
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <div className="p-2 bg-orange-50 text-orange-600 rounded-lg mb-2"><Star size={20} /></div>
-                <span className="font-medium text-gray-700">Papers</span>
+              
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-orange-50 text-orange-600 rounded-xl">
+                    <Clock size={24} />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm font-medium">Recent Uploads</p>
+                    <h3 className="text-2xl font-bold text-gray-900">{recentNotes.length}+</h3>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">New materials added this week</p>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+                    <Star size={24} />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm font-medium">Active Status</p>
+                    <h3 className="text-2xl font-bold text-gray-900">Online</h3>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">Ready to learn</p>
               </div>
             </div>
+
+            {/* Subjects Grid */}
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <BookOpen size={20} className="text-indigo-600" /> Your Subjects
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              {subjects.map((subject, index) => (
+                <motion.button
+                  key={subject.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setSelectedSubject(subject.id)}
+                  className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group relative overflow-hidden"
+                >
+                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br opacity-10 rounded-bl-full transition-transform group-hover:scale-110 ${
+                    index % 3 === 0 ? 'from-blue-500 to-cyan-500' : 
+                    index % 3 === 1 ? 'from-purple-500 to-pink-500' : 
+                    'from-orange-500 to-red-500'
+                  }`} />
+                  
+                  <div className="mb-4">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                      index % 3 === 0 ? 'bg-blue-50 text-blue-600' : 
+                      index % 3 === 1 ? 'bg-purple-50 text-purple-600' : 
+                      'bg-orange-50 text-orange-600'
+                    }`}>
+                      {subject.code || "SUB"}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                    {subject.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 flex items-center gap-1">
+                    View materials <ChevronRight size={14} />
+                  </p>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Recent Activity */}
+            {recentNotes.length > 0 && (
+              <>
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Clock size={20} className="text-indigo-600" /> Recently Added
+                </h2>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  {recentNotes.map((note, i) => (
+                    <div key={note.id} className={`p-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${i !== recentNotes.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2 rounded-lg ${
+                          note.type === 'QP' ? 'bg-orange-50 text-orange-600' : 
+                          note.type === 'ASSIGNMENT' ? 'bg-purple-50 text-purple-600' :
+                          'bg-blue-50 text-blue-600'
+                        }`}>
+                          {note.type === 'QP' ? <FileText size={18} /> : <Book size={18} />}
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{note.title}</h4>
+                          <p className="text-xs text-gray-500">{note.subject?.name} • {new Date(note.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <a 
+                        href={note.driveLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      >
+                        <Download size={18} />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="max-w-6xl mx-auto">
