@@ -4,6 +4,23 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
+// Extend the Session type to include 'mobile'
+import { Session } from "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      emailVerified?: Date | null;
+      image: string | null;
+      role: string;
+      mobile?: string | null;
+    };
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   debug: true,
   adapter: PrismaAdapter(prisma),
@@ -48,8 +65,12 @@ export const authOptions: NextAuthOptions = {
           where: { email: session.user.email! }
         });
         if (dbUser) {
-          (session.user as any).role = dbUser.role;
-          (session.user as any).id = dbUser.id;
+          session.user = {
+            ...session.user,
+            role: dbUser.role,
+            id: dbUser.id,
+            mobile: (dbUser as typeof dbUser & { mobile?: string | null }).mobile ?? null,
+          };
         }
       }
       return session;

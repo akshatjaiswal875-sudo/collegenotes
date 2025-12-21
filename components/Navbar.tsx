@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { LogOut } from "lucide-react";
+import Link from "next/link";
 
 interface NavbarProps {
   title: string;
@@ -18,7 +19,7 @@ export default function Navbar({ title }: NavbarProps) {
 
       <div className="flex items-center gap-4">
         {session?.user && (
-          <div className="flex items-center gap-3">
+          <Link href="/profile" className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors">
             <div className="text-right hidden md:block">
               <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
               <p className="text-xs text-gray-500">{session.user.email}</p>
@@ -36,7 +37,7 @@ export default function Navbar({ title }: NavbarProps) {
                 </span>
               </div>
             )}
-          </div>
+          </Link>
         )}
 
         <button
