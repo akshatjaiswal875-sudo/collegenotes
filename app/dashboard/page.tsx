@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen } from "lucide-react";
+import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
 
 export default function StudentDashboard() {
@@ -22,11 +22,6 @@ export default function StudentDashboard() {
     if (status === "unauthenticated") router.push("/");
     fetchSubjects();
     fetchRecentNotes();
-    
-    // Open sidebar on mobile by default so students can see subjects immediately
-    if (window.innerWidth < 768) {
-      setSidebarOpen(true);
-    }
   }, [status, router]);
 
   useEffect(() => {
@@ -98,6 +93,21 @@ export default function StudentDashboard() {
         </div>
 
         <div className="mb-6 flex-1 overflow-hidden flex flex-col">
+          <button
+            onClick={() => {
+              setSelectedSubject(null);
+              setSidebarOpen(false);
+            }}
+            className={`w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-6 ${
+              selectedSubject === null
+                ? "bg-white text-indigo-900 font-semibold shadow-lg shadow-indigo-900/20"
+                : "hover:bg-white/10 text-indigo-100 hover:text-white"
+            }`}
+          >
+            <Home size={20} />
+            <span>Home</span>
+          </button>
+
           <h2 className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-4 px-2 flex items-center gap-2">
             <Book size={14} /> Subjects
           </h2>
