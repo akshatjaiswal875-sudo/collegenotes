@@ -168,7 +168,7 @@ export default function AdminDashboard() {
                           <p className="font-medium">{visit.user.name}</p>
                           <p className="text-sm text-gray-400">{visit.user.email}</p>
                         </div>
-                        <span className="text-sm text-gray-400">{new Date(visit.timestamp).toLocaleString()}</span>
+                        <span className="text-sm text-gray-400" suppressHydrationWarning>{new Date(visit.timestamp).toLocaleString()}</span>
                       </div>
                     ))}
                   </div>

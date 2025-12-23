@@ -255,7 +255,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">{note.title}</h4>
-                          <p className="text-xs text-gray-500">{note.subject?.name} • {new Date(note.createdAt).toLocaleDateString()}</p>
+                          <p className="text-xs text-gray-500" suppressHydrationWarning>{note.subject?.name} • {new Date(note.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <a 
@@ -348,7 +348,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                          note.type === 'PRACTICAL' ? <FlaskConical size={24} /> :
                          <Book size={24} />}
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100" suppressHydrationWarning>
                         {new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </span>
                     </div>

@@ -66,7 +66,7 @@ export default async function VisitorsPage() {
                         <span className="text-gray-400 italic">Not Provided</span>
                       )}
                     </td>
-                    <td className="p-4 text-sm text-gray-600">
+                    <td className="p-4 text-sm text-gray-600" suppressHydrationWarning>
                       {user.visitLogs[0]?.timestamp 
                         ? new Date(user.visitLogs[0].timestamp).toLocaleString() 
                         : "N/A"}

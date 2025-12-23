@@ -1,10 +1,26 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { BookOpen, GraduationCap, Library, ClipboardList, FlaskConical } from "lucide-react";
 
 export default function LandingPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      if ((session.user as any).role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [status, session, router]);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white overflow-hidden relative">
       {/* Background Elements - Optimized for Mobile */}
@@ -33,7 +49,7 @@ export default function LandingPage() {
             onClick={() => signIn("google")}
             className="group relative px-8 py-4 bg-white text-indigo-900 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-105 flex items-center gap-3"
           >
-            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-6 h-6" />
+            <Image src="https://www.google.com/favicon.ico" alt="Google" width={24} height={24} className="w-6 h-6" />
             Sign in with Google
             <div className="absolute inset-0 rounded-xl ring-2 ring-white/50 group-hover:ring-4 transition-all" />
           </button>
