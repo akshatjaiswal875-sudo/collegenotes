@@ -103,3 +103,20 @@ model Bookmark {
 
   @@unique([userId, noteId])
 }
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // APPROVE_NOTE, REJECT_NOTE, DELETE_NOTE, CREATE_NOTE, UPDATE_NOTE, DELETE_USER, UPDATE_USER_ROLE, CREATE_SUBJECT, UPDATE_SUBJECT, DELETE_SUBJECT
+  entityType  String   // NOTE, USER, SUBJECT
+  entityId    String   // ID of the affected entity
+  entityName  String?  // Name/title for display purposes
+  details     String?  // Additional JSON details
+  adminId     String   // Who performed the action
+  adminName   String?  // Admin name for display
+  adminEmail  String?  // Admin email for display
+  timestamp   DateTime @default(now())
+  
+  @@index([adminId])
+  @@index([entityType])
+  @@index([timestamp])
+}
