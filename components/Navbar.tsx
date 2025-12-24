@@ -30,10 +30,10 @@ export default function Navbar({ title }: NavbarProps) {
             <>
               <button
                 onClick={() => setIsFeedbackOpen(true)}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium"
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium"
               >
                 <MessageSquare size={18} />
-                <span>Feedback</span>
+                <span className="hidden sm:inline">Feedback</span>
               </button>
 
               <Link href="/profile" className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors">
