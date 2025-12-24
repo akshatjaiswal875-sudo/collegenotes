@@ -4,10 +4,9 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home, Bookmark, Upload, Sun, Moon } from "lucide-react";
+import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home, Bookmark, Upload } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
 import OnboardingModal from "@/components/OnboardingModal";
-import { useTheme } from "next-themes";
 import Image from "next/image";
 
 interface DashboardClientProps {
@@ -29,12 +28,6 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
   const [view, setView] = useState<"HOME" | "SUBJECT" | "LIBRARY">("HOME");
   const [libraryNotes, setLibraryNotes] = useState<any[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(!user?.branch || !user?.year);
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -215,16 +208,6 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
         </div>
 
         <div className="mt-auto pt-6 border-t border-white/10">
-          {/* Theme Toggle */}
-          {mounted && (
-            <button
-              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all text-sm font-medium"
-            >
-              {resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-              {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </button>
-          )}
           <div className="flex items-center gap-3 mb-4 px-2 p-3 rounded-xl bg-white/5 border border-white/5">
             {user?.image ? (
               <Image src={user.image} alt={user.name || "User"} width={40} height={40} className="w-10 h-10 rounded-full border-2 border-indigo-400" />
