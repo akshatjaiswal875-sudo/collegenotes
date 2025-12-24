@@ -11,11 +11,12 @@ interface OnboardingModalProps {
 
 const BRANCHES = [
   { id: "CSE", name: "Computer Science & Engineering" },
+  { id: "CSE-AIML", name: "CSE - AI & ML" },
   { id: "ECE", name: "Electronics & Communication" },
   { id: "EEE", name: "Electrical & Electronics" },
   { id: "ME", name: "Mechanical Engineering" },
   { id: "CE", name: "Civil Engineering" },
-  { id: "IT", name: "Information Technology" },
+  { id: "IOT", name: "Internet of Things" },
   { id: "AIDS", name: "AI & Data Science" },
   { id: "OTHER", name: "Other" },
 ];

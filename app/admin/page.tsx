@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   BarChart3, Upload, Book, Users, Plus, FileText, Edit, Trash2, X, 
   CheckCircle, XCircle, Search, ChevronLeft, ChevronRight, 
-  UserCog, Menu, RefreshCw, History
+  UserCog, Menu, RefreshCw, History, MessageSquare, Star
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
@@ -26,6 +26,18 @@ interface User {
   _count?: {
     uploadedNotes: number;
     bookmarks: number;
+  };
+}
+
+interface Feedback {
+  id: string;
+  rating: number;
+  message: string;
+  createdAt: string;
+  user: {
+    name: string | null;
+    email: string | null;
+    image: string | null;
   };
 }
 
@@ -121,6 +133,15 @@ export default function AdminDashboard() {
     totalPages: 0,
   });
 
+  // Feedback State
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [feedbackPagination, setFeedbackPagination] = useState<Pagination>({
+    page: 1,
+    limit: 10,
+    totalCount: 0,
+    totalPages: 0,
+  });
+
   // Notes Search/Filter State
   const [noteSearch, setNoteSearch] = useState("");
   const [noteTypeFilter, setNoteTypeFilter] = useState("");
@@ -151,6 +172,8 @@ export default function AdminDashboard() {
       fetchAllUsers();
     } else if (activeTab === "audit") {
       fetchAuditLogs();
+    } else if (activeTab === "feedback") {
+      fetchFeedbacks();
     }
   }, [activeTab]);
 
@@ -163,6 +186,13 @@ export default function AdminDashboard() {
       return () => clearTimeout(timer);
     }
   }, [userSearch, userPagination.page]);
+
+  // Refetch feedback when page changes
+  useEffect(() => {
+    if (activeTab === "feedback") {
+      fetchFeedbacks();
+    }
+  }, [feedbackPagination.page]);
 
   const fetchStats = async () => {
     try {
@@ -256,6 +286,27 @@ export default function AdminDashboard() {
       toast.error("Failed to load audit logs");
     } finally {
       setLoading(prev => ({ ...prev, audit: false }));
+    }
+  };
+
+  const fetchFeedbacks = async () => {
+    setLoading(prev => ({ ...prev, feedback: true }));
+    try {
+      const params = new URLSearchParams({
+        page: feedbackPagination.page.toString(),
+        limit: feedbackPagination.limit.toString(),
+      });
+      const res = await fetch(`/api/feedback?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setFeedbacks(data.feedbacks);
+        setFeedbackPagination(data.pagination);
+      }
+    } catch (error) {
+      console.error("Failed to fetch feedback:", error);
+      toast.error("Failed to load feedback");
+    } finally {
+      setLoading(prev => ({ ...prev, feedback: false }));
     }
   };
 
@@ -481,6 +532,7 @@ export default function AdminDashboard() {
     { id: "subjects", label: "Subjects", icon: Book },
     { id: "users", label: "User Management", icon: UserCog },
     { id: "audit", label: "Audit Logs", icon: History },
+    { id: "feedback", label: "Feedback & Reviews", icon: MessageSquare },
   ];
 
   return (
@@ -1276,6 +1328,111 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => setAuditPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                               disabled={auditPagination.page === auditPagination.totalPages}
+                              className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <ChevronRight size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Feedback Tab */}
+            {activeTab === "feedback" && (
+              <motion.div
+                key="feedback"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-6"
+              >
+                <h1 className="text-2xl lg:text-3xl font-bold mb-6">User Feedback & Reviews</h1>
+
+                <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+                  {loading.feedback ? (
+                    <div className="p-12 text-center">
+                      <RefreshCw className="animate-spin mx-auto mb-4" size={32} />
+                      <p className="text-gray-400">Loading feedback...</p>
+                    </div>
+                  ) : feedbacks.length === 0 ? (
+                    <div className="p-12 text-center text-gray-500">
+                      <MessageSquare size={48} className="mx-auto mb-4 opacity-20" />
+                      <p className="text-lg">No feedback yet</p>
+                      <p className="text-sm">User reviews will appear here.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                        {feedbacks.map((feedback) => (
+                          <div key={feedback.id} className="bg-gray-700/30 p-6 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex items-center gap-3">
+                                {feedback.user.image ? (
+                                  <Image 
+                                    src={feedback.user.image} 
+                                    alt={feedback.user.name || ""} 
+                                    width={40} 
+                                    height={40} 
+                                    className="w-10 h-10 rounded-full" 
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-sm font-bold">
+                                    {feedback.user.name?.[0] || "?"}
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-medium text-white">{feedback.user.name || "Anonymous"}</p>
+                                  <p className="text-xs text-gray-400">{feedback.user.email}</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    size={16}
+                                    className={`${
+                                      star <= feedback.rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-600"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-gray-300 mb-4 whitespace-pre-wrap">{feedback.message}</p>
+                            <div className="text-xs text-gray-500 text-right">
+                              {new Date(feedback.createdAt).toLocaleDateString()} at {new Date(feedback.createdAt).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Pagination */}
+                      {feedbackPagination.totalPages > 1 && (
+                        <div className="flex items-center justify-between p-4 border-t border-gray-700">
+                          <p className="text-sm text-gray-400">
+                            Showing {((feedbackPagination.page - 1) * feedbackPagination.limit) + 1} to{" "}
+                            {Math.min(feedbackPagination.page * feedbackPagination.limit, feedbackPagination.totalCount)} of{" "}
+                            {feedbackPagination.totalCount} reviews
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setFeedbackPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                              disabled={feedbackPagination.page === 1}
+                              className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <ChevronLeft size={18} />
+                            </button>
+                            <span className="px-4 py-2 bg-gray-700 rounded-lg text-sm">
+                              {feedbackPagination.page} / {feedbackPagination.totalPages}
+                            </span>
+                            <button
+                              onClick={() => setFeedbackPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                              disabled={feedbackPagination.page === feedbackPagination.totalPages}
                               className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <ChevronRight size={18} />

@@ -51,6 +51,7 @@ model User {
   visitLogs     VisitLog[]
   bookmarks     Bookmark[]
   uploadedNotes Note[]
+  feedbacks     Feedback[]
 }
 
 model VerificationToken {
@@ -120,3 +121,13 @@ model AuditLog {
   @@index([entityType])
   @@index([timestamp])
 }
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  rating    Int
+  message   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
