@@ -26,21 +26,42 @@ export default async function StudentDashboard() {
   });
 
   // Build subject filter based on user's branch and year
-  const subjectWhere: any = {};
-  if (user?.branch) {
-    subjectWhere.OR = [
-      { branch: user.branch },
-      { branch: null }, // Include subjects without branch (common subjects)
-    ];
-  }
-  if (user?.year) {
-    subjectWhere.OR = subjectWhere.OR 
-      ? subjectWhere.OR.map((cond: any) => ({ ...cond, year: { in: [user.year, null] } }))
-      : [{ year: user.year }, { year: null }];
+  let subjectWhere: any = undefined;
+  
+  if (user?.branch || user?.year) {
+    const conditions: any[] = [];
+    
+    // If user has both branch and year
+    if (user?.branch && user?.year) {
+      conditions.push(
+        { branch: user.branch, year: user.year },
+        { branch: user.branch, year: null },
+        { branch: null, year: user.year },
+        { branch: null, year: null }
+      );
+    } 
+    // If user has only branch
+    else if (user?.branch) {
+      conditions.push(
+        { branch: user.branch },
+        { branch: null }
+      );
+    }
+    // If user has only year
+    else if (user?.year) {
+      conditions.push(
+        { year: user.year },
+        { year: null }
+      );
+    }
+    
+    if (conditions.length > 0) {
+      subjectWhere = { OR: conditions };
+    }
   }
 
   const subjects = await prisma.subject.findMany({
-    where: Object.keys(subjectWhere).length > 0 ? subjectWhere : undefined,
+    where: subjectWhere,
     orderBy: { name: 'asc' }
   });
 
