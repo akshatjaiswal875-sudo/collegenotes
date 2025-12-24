@@ -4,7 +4,7 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home, Bookmark, Upload, User, ChevronLeft } from "lucide-react";
+import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home, Bookmark, Upload, User, ChevronLeft, MessageSquare } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
 import OnboardingModal from "@/components/OnboardingModal";
 import FeedbackModal from "@/components/FeedbackModal";
@@ -205,10 +205,18 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
 
           <button
             onClick={() => router.push('/contribute')}
-            className="w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-6 hover:bg-white/10 text-indigo-100 hover:text-white"
+            className="w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-2 hover:bg-white/10 text-indigo-100 hover:text-white"
           >
             <Upload size={20} />
             <span>Contribute</span>
+          </button>
+
+          <button
+            onClick={() => setShowFeedbackModal(true)}
+            className="w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-6 hover:bg-white/10 text-indigo-100 hover:text-white"
+          >
+            <MessageSquare size={20} />
+            <span>Feedback</span>
           </button>
 
           <h2 className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-4 px-2 flex items-center gap-2">
@@ -673,6 +681,20 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                   <div className="flex-1 text-left">
                     <h3 className="font-semibold text-gray-900">Contribute Notes</h3>
                     <p className="text-xs text-gray-500">Share your study materials</p>
+                  </div>
+                  <ChevronRight size={20} className="text-gray-400" />
+                </button>
+
+                <button
+                  onClick={() => setShowFeedbackModal(true)}
+                  className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm active:bg-gray-50"
+                >
+                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <MessageSquare size={22} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-gray-900">Give Feedback</h3>
+                    <p className="text-xs text-gray-500">Rate your experience</p>
                   </div>
                   <ChevronRight size={20} className="text-gray-400" />
                 </button>
