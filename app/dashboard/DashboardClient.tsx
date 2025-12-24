@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home, Bookmark, Upload, User, ChevronLeft } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
 import OnboardingModal from "@/components/OnboardingModal";
+import FeedbackModal from "@/components/FeedbackModal";
 import Image from "next/image";
 
 interface DashboardClientProps {
@@ -28,6 +29,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
   const [view, setView] = useState<"HOME" | "SUBJECT" | "LIBRARY" | "SUBJECTS_LIST" | "PROFILE">("HOME");
   const [libraryNotes, setLibraryNotes] = useState<any[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(!user?.branch || !user?.year);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -36,7 +38,25 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
 
   useEffect(() => {
     fetchBookmarks();
+    checkFeedbackStatus();
   }, []);
+
+  const checkFeedbackStatus = async () => {
+    try {
+      const res = await fetch("/api/feedback/check");
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.hasFeedback) {
+          // Show feedback modal after a delay
+          setTimeout(() => {
+            setShowFeedbackModal(true);
+          }, 5000);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to check feedback status", error);
+    }
+  };
 
   const fetchBookmarks = async () => {
     const res = await fetch("/api/bookmarks");
@@ -144,6 +164,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row relative font-sans pb-16 md:pb-0">
       <WelcomePopup />
       {showOnboarding && <OnboardingModal user={user} onComplete={handleOnboardingComplete} />}
+      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} />
       
       {/* Desktop Sidebar - Hidden on Mobile */}
       <div className="hidden md:flex fixed md:sticky top-0 h-screen w-72 bg-gradient-to-b from-indigo-900 to-indigo-950 text-white p-6 flex-col z-40 shadow-2xl">
