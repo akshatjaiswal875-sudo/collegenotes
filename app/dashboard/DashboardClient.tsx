@@ -4,8 +4,10 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home } from "lucide-react";
+import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home, Bookmark, Upload } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
+import OnboardingModal from "@/components/OnboardingModal";
+import Image from "next/image";
 
 interface DashboardClientProps {
   initialSubjects: any[];
@@ -22,6 +24,60 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
   const [filter, setFilter] = useState<"ALL" | "NOTE" | "QP" | "ASSIGNMENT" | "PRACTICAL">("ALL");
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [bookmarkedNoteIds, setBookmarkedNoteIds] = useState<Set<string>>(new Set());
+  const [view, setView] = useState<"HOME" | "SUBJECT" | "LIBRARY">("HOME");
+  const [libraryNotes, setLibraryNotes] = useState<any[]>([]);
+  const [showOnboarding, setShowOnboarding] = useState(!user?.branch || !user?.year);
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    // Refresh the page to get filtered subjects
+    router.refresh();
+  };
+
+  useEffect(() => {
+    fetchBookmarks();
+  }, []);
+
+  const fetchBookmarks = async () => {
+    const res = await fetch("/api/bookmarks");
+    if (res.ok) {
+      const data = await res.json();
+      setBookmarkedNoteIds(new Set(data.map((b: any) => b.noteId)));
+      setLibraryNotes(data.map((b: any) => b.note));
+    }
+  };
+
+  const toggleBookmark = async (noteId: string) => {
+    // Optimistic update
+    const newBookmarks = new Set(bookmarkedNoteIds);
+    if (newBookmarks.has(noteId)) {
+      newBookmarks.delete(noteId);
+    } else {
+      newBookmarks.add(noteId);
+    }
+    setBookmarkedNoteIds(newBookmarks);
+
+    const res = await fetch("/api/bookmarks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ noteId }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.bookmarked) {
+        // If we added a bookmark, we might want to refresh the library list if we are in library view
+        // But for now, let's just re-fetch to be safe or handle it locally
+        fetchBookmarks(); 
+      } else {
+        fetchBookmarks();
+      }
+    } else {
+      // Revert on error
+      fetchBookmarks();
+    }
+  };
 
   useEffect(() => {
     // Open sidebar on mobile by default so students can see subjects immediately
@@ -52,8 +108,9 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row relative font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row relative font-sans">
       <WelcomePopup />
+      {showOnboarding && <OnboardingModal user={user} onComplete={handleOnboardingComplete} />}
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -71,7 +128,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
       )}
 
       {/* Sidebar */}
-      <div className={`fixed md:sticky top-0 h-screen w-72 bg-gradient-to-b from-indigo-900 to-indigo-950 text-white p-6 flex flex-col z-40 transition-transform duration-300 ease-in-out shadow-2xl ${
+      <div className={`fixed md:sticky top-0 h-screen w-72 bg-linear-to-b from-indigo-900 to-indigo-950 dark:from-gray-800 dark:to-gray-900 text-white p-6 flex flex-col z-40 transition-transform duration-300 ease-in-out shadow-2xl ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       }`}>
         <div className="flex items-center gap-3 mb-10 mt-12 md:mt-0">
@@ -88,16 +145,41 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
           <button
             onClick={() => {
               setSelectedSubject(null);
+              setView("HOME");
               setSidebarOpen(false);
             }}
-            className={`w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-6 ${
-              selectedSubject === null
+            className={`w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-2 ${
+              view === "HOME"
                 ? "bg-white text-indigo-900 font-semibold shadow-lg shadow-indigo-900/20"
                 : "hover:bg-white/10 text-indigo-100 hover:text-white"
             }`}
           >
             <Home size={20} />
             <span>Home</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedSubject(null);
+              setView("LIBRARY");
+              setSidebarOpen(false);
+            }}
+            className={`w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-2 ${
+              view === "LIBRARY"
+                ? "bg-white text-indigo-900 font-semibold shadow-lg shadow-indigo-900/20"
+                : "hover:bg-white/10 text-indigo-100 hover:text-white"
+            }`}
+          >
+            <Bookmark size={20} />
+            <span>My Library</span>
+          </button>
+
+          <button
+            onClick={() => router.push('/contribute')}
+            className="w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-6 hover:bg-white/10 text-indigo-100 hover:text-white"
+          >
+            <Upload size={20} />
+            <span>Contribute</span>
           </button>
 
           <h2 className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-4 px-2 flex items-center gap-2">
@@ -109,10 +191,11 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                 key={s.id}
                 onClick={() => {
                   setSelectedSubject(s.id);
+                  setView("SUBJECT");
                   setSidebarOpen(false);
                 }}
                 className={`w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center justify-between group ${
-                  selectedSubject === s.id 
+                  selectedSubject === s.id && view === "SUBJECT"
                     ? "bg-white text-indigo-900 font-semibold shadow-lg shadow-indigo-900/20" 
                     : "hover:bg-white/10 text-indigo-100 hover:text-white"
                 }`}
@@ -127,7 +210,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
         <div className="mt-auto pt-6 border-t border-white/10">
           <div className="flex items-center gap-3 mb-4 px-2 p-3 rounded-xl bg-white/5 border border-white/5">
             {user?.image ? (
-              <img src={user.image} className="w-10 h-10 rounded-full border-2 border-indigo-400" />
+              <Image src={user.image} alt={user.name || "User"} width={40} height={40} className="w-10 h-10 rounded-full border-2 border-indigo-400" />
             ) : (
               <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center border-2 border-indigo-400 shadow-lg">
                 <span className="font-bold text-white">{user?.name?.[0] || "U"}</span>
@@ -148,17 +231,17 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 md:p-10 overflow-y-auto h-screen bg-gray-50/50">
-        {!selectedSubject ? (
+      <div className="flex-1 p-6 md:p-10 overflow-y-auto h-screen bg-gray-50/50 dark:bg-gray-900/50">
+        {view === "HOME" && (
           <div className="max-w-6xl mx-auto">
             <div className="mb-10">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {(user?.name || "Student").split(' ')[0]}! 👋</h1>
-              <p className="text-gray-500">Here's what's happening in your courses.</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome back, {(user?.name || "Student").split(' ')[0]}! 👋</h1>
+              <p className="text-gray-500 dark:text-gray-400">Here's what's happening in your courses.</p>
             </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
+              <div className="bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/30">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                     <Book size={24} />
@@ -171,36 +254,36 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                 <p className="text-xs text-indigo-100/80">Access all your course materials</p>
               </div>
               
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="p-3 bg-orange-50 text-orange-600 rounded-xl">
+                  <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-xl">
                     <Clock size={24} />
                   </div>
                   <div>
-                    <p className="text-gray-500 text-sm font-medium">Recent Uploads</p>
-                    <h3 className="text-2xl font-bold text-gray-900">{recentNotes.length}+</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Recent Uploads</p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{recentNotes.length}+</h3>
                   </div>
                 </div>
-                <p className="text-xs text-gray-400">New materials added this week</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">New materials added this week</p>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+                  <div className="p-3 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl">
                     <Star size={24} />
                   </div>
                   <div>
-                    <p className="text-gray-500 text-sm font-medium">Active Status</p>
-                    <h3 className="text-2xl font-bold text-gray-900">Online</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Active Status</p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Online</h3>
                   </div>
                 </div>
-                <p className="text-xs text-gray-400">Ready to learn</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Ready to learn</p>
               </div>
             </div>
 
             {/* Subjects Grid */}
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <BookOpen size={20} className="text-indigo-600" /> Your Subjects
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <BookOpen size={20} className="text-indigo-600 dark:text-indigo-400" /> Your Subjects
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {subjects.map((subject, index) => (
@@ -208,10 +291,13 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                   key={subject.id}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedSubject(subject.id)}
-                  className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group relative overflow-hidden"
+                  onClick={() => {
+                    setSelectedSubject(subject.id);
+                    setView("SUBJECT");
+                  }}
+                  className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all text-left group relative overflow-hidden"
                 >
-                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br opacity-10 rounded-bl-full transition-transform group-hover:scale-110 ${
+                  <div className={`absolute top-0 right-0 w-24 h-24 bg-linear-to-br opacity-10 rounded-bl-full transition-transform group-hover:scale-110 ${
                     index % 3 === 0 ? 'from-blue-500 to-cyan-500' : 
                     index % 3 === 1 ? 'from-purple-500 to-pink-500' : 
                     'from-orange-500 to-red-500'
@@ -219,17 +305,17 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                   
                   <div className="mb-4">
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                      index % 3 === 0 ? 'bg-blue-50 text-blue-600' : 
-                      index % 3 === 1 ? 'bg-purple-50 text-purple-600' : 
-                      'bg-orange-50 text-orange-600'
+                      index % 3 === 0 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 
+                      index % 3 === 1 ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 
+                      'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                     }`}>
                       {subject.code || "SUB"}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {subject.name}
                   </h3>
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     View materials <ChevronRight size={14} />
                   </p>
                 </motion.button>
@@ -239,30 +325,30 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
             {/* Recent Activity */}
             {recentNotes.length > 0 && (
               <>
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Clock size={20} className="text-indigo-600" /> Recently Added
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                  <Clock size={20} className="text-indigo-600 dark:text-indigo-400" /> Recently Added
                 </h2>
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                   {recentNotes.map((note, i) => (
-                    <div key={note.id} className={`p-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${i !== recentNotes.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                    <div key={note.id} className={`p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${i !== recentNotes.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''}`}>
                       <div className="flex items-center gap-4">
                         <div className={`p-2 rounded-lg ${
-                          note.type === 'QP' ? 'bg-orange-50 text-orange-600' : 
-                          note.type === 'ASSIGNMENT' ? 'bg-purple-50 text-purple-600' :
-                          'bg-blue-50 text-blue-600'
+                          note.type === 'QP' ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 
+                          note.type === 'ASSIGNMENT' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
+                          'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                         }`}>
                           {note.type === 'QP' ? <FileText size={18} /> : <Book size={18} />}
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">{note.title}</h4>
-                          <p className="text-xs text-gray-500" suppressHydrationWarning>{note.subject?.name} • {new Date(note.createdAt).toLocaleDateString()}</p>
+                          <h4 className="font-medium text-gray-900 dark:text-white">{note.title}</h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>{note.subject?.name} • {new Date(note.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <a 
                         href={note.driveLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                       >
                         <Download size={18} />
                       </a>
@@ -272,24 +358,26 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
               </>
             )}
           </div>
-        ) : (
+        )}
+
+        {view === "SUBJECT" && (
           <div className="max-w-6xl mx-auto">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                     {subjects.find(s => s.id === selectedSubject)?.name}
                   </h1>
-                  <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full border border-indigo-100">
+                  <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold rounded-full border border-indigo-100 dark:border-indigo-800">
                     {subjects.find(s => s.id === selectedSubject)?.code}
                   </span>
                 </div>
-                <p className="text-gray-500 flex items-center gap-2 text-sm">
+                <p className="text-gray-500 dark:text-gray-400 flex items-center gap-2 text-sm">
                   <Clock size={14} /> Last updated recently
                 </p>
               </div>
               
-              <div className="flex flex-wrap gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
+              <div className="flex flex-wrap gap-2 bg-gray-50 dark:bg-gray-700/50 p-1.5 rounded-xl border border-gray-200 dark:border-gray-600">
                 {[
                   { id: "ALL", label: "All" },
                   { id: "NOTE", label: "Notes" },
@@ -302,8 +390,8 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                     onClick={() => setFilter(tab.id as any)}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                       filter === tab.id 
-                        ? "bg-white text-indigo-600 shadow-sm ring-1 ring-black/5" 
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                        ? "bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-black/5 dark:ring-white/5" 
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
                   >
                     {tab.label}
@@ -319,7 +407,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
               <input
                 type="text"
                 placeholder="Search for chapters, topics, or keywords..."
-                className="w-full pl-11 pr-4 py-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm bg-white text-gray-900 transition-all placeholder:text-gray-400"
+                className="w-full pl-11 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
@@ -348,15 +436,30 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                          note.type === 'PRACTICAL' ? <FlaskConical size={24} /> :
                          <Book size={24} />}
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100" suppressHydrationWarning>
-                        {new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleBookmark(note.id);
+                          }}
+                          className={`p-2 rounded-full transition-colors ${
+                            bookmarkedNoteIds.has(note.id)
+                              ? "text-yellow-500 bg-yellow-50 hover:bg-yellow-100"
+                              : "text-gray-400 hover:text-indigo-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          <Bookmark size={18} fill={bookmarkedNoteIds.has(note.id) ? "currentColor" : "none"} />
+                        </button>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 dark:bg-gray-700 px-2.5 py-1 rounded-full border border-gray-100 dark:border-gray-600" suppressHydrationWarning>
+                          {new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
                     </div>
                     
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
                       {note.title}
                     </h3>
-                    <p className="text-sm text-gray-500 mb-6 line-clamp-2 flex-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 line-clamp-2 flex-1">
                       {note.chapter}
                     </p>
 
@@ -364,7 +467,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                       href={note.driveLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 hover:bg-indigo-600 text-gray-700 hover:text-white font-semibold rounded-xl transition-all duration-200 border border-gray-200 hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-200"
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 dark:bg-gray-700 hover:bg-indigo-600 text-gray-700 dark:text-gray-200 hover:text-white font-semibold rounded-xl transition-all duration-200 border border-gray-200 dark:border-gray-600 hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-200 dark:hover:shadow-indigo-900/30"
                     >
                       <Download size={18} />
                       <span>Download Resource</span>
@@ -375,13 +478,103 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
             </div>
 
             {filteredNotes.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+              <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-gray-800 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                <div className="w-16 h-16 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
                   <Search className="text-gray-400" size={24} />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">No materials found</h3>
-                <p className="text-gray-500 max-w-xs mx-auto">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">No materials found</h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
                   Try adjusting your search or filter to find what you're looking for.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {view === "LIBRARY" && (
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-10">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Library</h1>
+              <p className="text-gray-500 dark:text-gray-400">Your saved notes and resources.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <AnimatePresence mode="popLayout">
+                {libraryNotes.map((note) => (
+                  <motion.div
+                    key={note.id}
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                    layout
+                    className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 dark:border-gray-700 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:border-indigo-100 dark:hover:border-indigo-800 transition-all duration-300 group flex flex-col h-full"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`p-3.5 rounded-xl transition-colors ${
+                        note.type === 'QP' ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/40' : 
+                        note.type === 'ASSIGNMENT' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/40' :
+                        note.type === 'PRACTICAL' ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 group-hover:bg-green-100 dark:group-hover:bg-green-900/40' :
+                        'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40'
+                      }`}>
+                        {note.type === 'QP' ? <FileText size={24} /> : 
+                         note.type === 'ASSIGNMENT' ? <ClipboardList size={24} /> :
+                         note.type === 'PRACTICAL' ? <FlaskConical size={24} /> :
+                         <Book size={24} />}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleBookmark(note.id);
+                          }}
+                          className={`p-2 rounded-full transition-colors ${
+                            bookmarkedNoteIds.has(note.id)
+                              ? "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/40"
+                              : "text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          <Bookmark size={18} fill={bookmarkedNoteIds.has(note.id) ? "currentColor" : "none"} />
+                        </button>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 dark:bg-gray-700 px-2.5 py-1 rounded-full border border-gray-100 dark:border-gray-600" suppressHydrationWarning>
+                          {new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
+                      {note.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 line-clamp-2 flex-1">
+                      {note.chapter}
+                    </p>
+                    {note.subject && (
+                       <p className="text-xs text-indigo-500 dark:text-indigo-400 font-semibold mb-4 bg-indigo-50 dark:bg-indigo-900/30 inline-block px-2 py-1 rounded-md">
+                         {note.subject.name}
+                       </p>
+                    )}
+
+                    <a
+                      href={note.driveLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 dark:bg-gray-700 hover:bg-indigo-600 text-gray-700 dark:text-gray-200 hover:text-white font-semibold rounded-xl transition-all duration-200 border border-gray-200 dark:border-gray-600 hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-200 dark:hover:shadow-indigo-900/30"
+                    >
+                      <Download size={18} />
+                      <span>Download Resource</span>
+                    </a>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {libraryNotes.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-gray-800 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                <div className="w-16 h-16 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                  <Bookmark className="text-gray-400" size={24} />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Your library is empty</h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+                  Bookmark notes to access them quickly here.
                 </p>
               </div>
             )}

@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const subjectId = searchParams.get('subjectId');
 
-  const where = subjectId ? { subjectId } : {};
+  const where = subjectId ? { subjectId, status: "APPROVED" } : { status: "APPROVED" };
 
   const notes = await prisma.note.findMany({
     where,

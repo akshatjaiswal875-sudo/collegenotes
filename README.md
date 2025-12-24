@@ -1,13 +1,23 @@
 # College Notes Portal
 
-A comprehensive platform for students to access lecture notes, question papers, and study materials.
+A comprehensive platform for students to access lecture notes, question papers, and study materials. Features include bookmarking, community contributions, personalized dashboards, and dark mode support.
+
+## Features
+
+- **User Authentication**: Secure login with Google OAuth
+- **Personalized Dashboard**: Filter notes by branch and year
+- **Bookmarks**: Save and manage favorite notes
+- **Community Contributions**: Students can submit notes for approval
+- **Admin Panel**: Manage users, approve contributions, view statistics
+- **Dark Mode**: Toggle between light and dark themes
+- **Responsive Design**: Works on all devices
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+ installed
-- SQLite (for local development)
+- PostgreSQL database (for production) or SQLite (for local development)
 
 ### Installation
 
@@ -21,6 +31,7 @@ A comprehensive platform for students to access lecture notes, question papers, 
     - Update `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` with your Google Cloud Console credentials.
     - Set `NEXTAUTH_SECRET` to a random string (you can generate one with `openssl rand -base64 32`).
     - Update `NEXTAUTH_URL` to your production URL when deploying.
+    - Set `DATABASE_URL` for your PostgreSQL database.
 
 3.  Initialize the database:
     ```bash
@@ -56,20 +67,17 @@ npm start
 
 #### Vercel
 
-This project uses SQLite, which is not supported on serverless platforms like Vercel (since the filesystem is ephemeral).
-To deploy to Vercel, you should switch to a cloud database like PostgreSQL (e.g., Vercel Postgres, Supabase, Neon).
+This project uses PostgreSQL, which is well-supported on Vercel.
 
-1.  Update `prisma/schema.prisma`:
-    ```prisma
-    datasource db {
-      provider = "postgresql"
-      url      = env("DATABASE_URL")
-    }
-    ```
-2.  Update `.env` with your `DATABASE_URL`.
-3.  Run `npx prisma db push` to sync the schema.
+1.  Ensure your `DATABASE_URL` is set in Vercel's environment variables.
+2.  Run `npx prisma db push` to sync the schema (you can do this locally or in a build hook).
+3.  Deploy to Vercel - the build command will handle the rest.
 
 #### VPS / Docker
 
-If deploying to a VPS or using Docker, SQLite will work fine as long as the database file is persisted.
+For VPS deployment or Docker, ensure your PostgreSQL database is accessible.
+
+1.  Set the `DATABASE_URL` environment variable.
+2.  Run `npx prisma db push` to sync the schema.
+3.  Build and start the application.
 # college-Notes

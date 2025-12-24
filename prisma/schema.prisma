@@ -44,9 +44,13 @@ model User {
   image         String?
   role          String    @default("STUDENT") // STUDENT or ADMIN
   mobile        String?
+  branch        String?
+  year          String?
   accounts      Account[]
   sessions      Session[]
   visitLogs     VisitLog[]
+  bookmarks     Bookmark[]
+  uploadedNotes Note[]
 }
 
 model VerificationToken {
@@ -58,10 +62,12 @@ model VerificationToken {
 }
 
 model Subject {
-  id    String @id @default(cuid())
-  name  String @unique
-  code  String?
-  notes Note[]
+  id     String  @id @default(cuid())
+  name   String  @unique
+  code   String?
+  branch String?
+  year   String?
+  notes  Note[]
 }
 
 model Note {
@@ -73,6 +79,10 @@ model Note {
   subject     Subject  @relation(fields: [subjectId], references: [id])
   createdAt   DateTime @default(now())
   type        String   @default("NOTE") // NOTE or QP (Question Paper)
+  status      String   @default("APPROVED") // APPROVED, PENDING, REJECTED
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id])
+  bookmarks   Bookmark[]
 }
 
 model VisitLog {
@@ -81,4 +91,15 @@ model VisitLog {
   user      User     @relation(fields: [userId], references: [id])
   timestamp DateTime @default(now())
   page      String?
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  noteId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, noteId])
 }

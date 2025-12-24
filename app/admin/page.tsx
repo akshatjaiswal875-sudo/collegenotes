@@ -4,8 +4,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Upload, Book, Users, LogOut, Plus, FileText, Edit, Trash2, X } from "lucide-react";
+import { BarChart3, Upload, Book, Users, LogOut, Plus, FileText, Edit, Trash2, X, CheckCircle, XCircle, Clock } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Image from "next/image";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -15,6 +16,7 @@ export default function AdminDashboard() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
+  const [pendingNotes, setPendingNotes] = useState<any[]>([]);
   
   // Forms
   const [noteForm, setNoteForm] = useState({ title: "", chapter: "", driveLink: "", subjectId: "", type: "NOTE" });
@@ -33,6 +35,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (activeTab === "manage-notes") {
       fetchNotes();
+    } else if (activeTab === "approvals") {
+      fetchPendingNotes();
     }
   }, [activeTab]);
 
@@ -54,6 +58,24 @@ export default function AdminDashboard() {
   const fetchNotes = async () => {
     const res = await fetch("/api/notes");
     if (res.ok) setNotes(await res.json());
+  };
+
+  const fetchPendingNotes = async () => {
+    const res = await fetch("/api/admin/approvals");
+    if (res.ok) setPendingNotes(await res.json());
+  };
+
+  const handleApproval = async (noteId: string, action: "APPROVE" | "REJECT") => {
+    const res = await fetch("/api/admin/approvals", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ noteId, action }),
+    });
+    
+    if (res.ok) {
+      fetchPendingNotes();
+      // Also refresh stats if needed
+    }
   };
 
   const handleUploadNote = async (e: React.FormEvent) => {
@@ -121,6 +143,17 @@ export default function AdminDashboard() {
             <FileText size={20} /> Manage Notes
           </button>
           <button
+            onClick={() => setActiveTab("approvals")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === "approvals" ? "bg-indigo-600" : "hover:bg-gray-700"}`}
+          >
+            <CheckCircle size={20} /> Approvals
+            {pendingNotes.length > 0 && (
+              <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {pendingNotes.length}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab("subjects")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === "subjects" ? "bg-indigo-600" : "hover:bg-gray-700"}`}
           >
@@ -181,7 +214,7 @@ export default function AdminDashboard() {
                       <div key={user.id} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
                         <div className="flex items-center gap-3">
                           {user.image ? (
-                            <img src={user.image} alt={user.name} className="w-8 h-8 rounded-full" />
+                            <Image src={user.image} alt={user.name} width={32} height={32} className="w-8 h-8 rounded-full" />
                           ) : (
                             <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-xs">
                               {user.name?.[0]}
@@ -390,6 +423,90 @@ export default function AdminDashboard() {
                     {subjects.length === 0 && <p className="text-gray-500 text-center py-4">No subjects added yet.</p>}
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "approvals" && (
+            <motion.div
+              key="approvals"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <h1 className="text-3xl font-bold mb-6">Pending Approvals</h1>
+              
+              <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-700/50 text-gray-400 text-sm uppercase">
+                      <tr>
+                        <th className="p-4">Title</th>
+                        <th className="p-4">Subject</th>
+                        <th className="p-4">Type</th>
+                        <th className="p-4">Submitted By</th>
+                        <th className="p-4">Date</th>
+                        <th className="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700">
+                      {pendingNotes.map((note) => (
+                        <tr key={note.id} className="hover:bg-gray-700/30 transition-colors">
+                          <td className="p-4">
+                            <div className="font-medium text-white">{note.title}</div>
+                            <div className="text-sm text-gray-400">{note.chapter}</div>
+                            <a href={note.driveLink} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-400 hover:underline mt-1 inline-block">
+                              View Resource
+                            </a>
+                          </td>
+                          <td className="p-4 text-gray-300">{note.subject?.name}</td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${
+                              note.type === 'QP' ? 'bg-orange-500/20 text-orange-400' : 
+                              note.type === 'ASSIGNMENT' ? 'bg-purple-500/20 text-purple-400' :
+                              'bg-blue-500/20 text-blue-400'
+                            }`}>
+                              {note.type}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div className="text-sm text-white">{note.uploadedBy?.name || "Unknown"}</div>
+                            <div className="text-xs text-gray-500">{note.uploadedBy?.email}</div>
+                          </td>
+                          <td className="p-4 text-sm text-gray-400" suppressHydrationWarning>
+                            {new Date(note.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleApproval(note.id, "APPROVE")}
+                                className="p-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg transition-colors"
+                                title="Approve"
+                              >
+                                <CheckCircle size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleApproval(note.id, "REJECT")}
+                                className="p-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition-colors"
+                                title="Reject"
+                              >
+                                <XCircle size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {pendingNotes.length === 0 && (
+                  <div className="p-12 text-center text-gray-500">
+                    <CheckCircle size={48} className="mx-auto mb-4 opacity-20" />
+                    <p className="text-lg">No pending approvals</p>
+                    <p className="text-sm">All user submissions have been reviewed.</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
