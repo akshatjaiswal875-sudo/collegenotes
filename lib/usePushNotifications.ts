@@ -24,28 +24,40 @@ export function usePushNotifications() {
   // Check if push is supported and get current status
   useEffect(() => {
     const checkSupport = async () => {
-      const supported =
-        "serviceWorker" in navigator &&
-        "PushManager" in window &&
-        "Notification" in window &&
-        !!VAPID_PUBLIC_KEY;
+      try {
+        const supported =
+          typeof window !== "undefined" &&
+          "serviceWorker" in navigator &&
+          "PushManager" in window &&
+          "Notification" in window &&
+          !!VAPID_PUBLIC_KEY;
 
-      setIsSupported(supported);
-      
-      if (supported) {
-        setPermission(Notification.permission);
+        setIsSupported(supported);
         
-        // Check if already subscribed
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.getSubscription();
-          setIsSubscribed(!!subscription);
-        } catch (error) {
-          console.error("Error checking subscription:", error);
+        if (supported) {
+          setPermission(Notification.permission);
+          
+          // First register service worker if not already registered
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          let registration = registrations.find(r => r.active?.scriptURL.includes("sw.js"));
+          
+          if (!registration) {
+            // Register the service worker
+            registration = await navigator.serviceWorker.register("/sw.js");
+            console.log("Service Worker registered");
+          }
+          
+          // Check if already subscribed
+          if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            setIsSubscribed(!!subscription);
+          }
         }
+      } catch (error) {
+        console.error("Error checking push support:", error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
     checkSupport();
