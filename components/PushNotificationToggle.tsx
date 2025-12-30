@@ -8,6 +8,20 @@ export default function PushNotificationToggle() {
   const { isSupported, isSubscribed, isLoading, permission, subscribe, unsubscribe } =
     usePushNotifications();
 
+  // Show loading state initially, then hide if not supported
+  if (isLoading) {
+    return (
+      <button
+        disabled
+        className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-400 text-sm font-medium"
+        title="Checking notification support..."
+      >
+        <div className="w-[18px] h-[18px] border-2 border-current border-t-transparent rounded-full animate-spin" />
+        <span className="hidden sm:inline">Loading...</span>
+      </button>
+    );
+  }
+
   if (!isSupported) {
     return null; // Don't show anything if not supported
   }

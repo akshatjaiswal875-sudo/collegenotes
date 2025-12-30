@@ -8,6 +8,8 @@ import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList,
 import WelcomePopup from "@/components/WelcomePopup";
 import OnboardingModal from "@/components/OnboardingModal";
 import FeedbackModal from "@/components/FeedbackModal";
+import NotificationBell from "@/components/NotificationBell";
+import PushNotificationToggle from "@/components/PushNotificationToggle";
 import Image from "next/image";
 
 interface Subject {
@@ -170,16 +172,22 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
 
   // Mobile Header
   const MobileHeader = ({ title, showBack = false }: { title: string; showBack?: boolean }) => (
-    <div className="md:hidden sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-30 px-4 py-3 flex items-center gap-3">
-      {showBack && (
-        <button 
-          onClick={() => setView("SUBJECTS_LIST")} 
-          className="p-2 -ml-2 rounded-full hover:bg-gray-100 active:bg-gray-200"
-        >
-          <ChevronLeft size={24} className="text-gray-600" />
-        </button>
-      )}
-      <h1 className="text-lg font-bold text-gray-900 truncate">{title}</h1>
+    <div className="md:hidden sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-30 px-4 py-3 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        {showBack && (
+          <button 
+            onClick={() => setView("SUBJECTS_LIST")} 
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 active:bg-gray-200"
+          >
+            <ChevronLeft size={24} className="text-gray-600" />
+          </button>
+        )}
+        <h1 className="text-lg font-bold text-gray-900 truncate">{title}</h1>
+      </div>
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <PushNotificationToggle />
+      </div>
     </div>
   );
 
@@ -191,14 +199,22 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
       
       {/* Desktop Sidebar - Hidden on Mobile */}
       <div className="hidden md:flex fixed md:sticky top-0 h-screen w-72 bg-gradient-to-b from-indigo-900 to-indigo-950 text-white p-6 flex-col z-40 shadow-2xl">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-sm border border-white/10 shadow-inner">
-            <GraduationCap size={28} className="text-indigo-200" />
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-sm border border-white/10 shadow-inner">
+              <GraduationCap size={28} className="text-indigo-200" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Student Portal</h1>
+              <p className="text-xs text-indigo-300 font-medium">Academic Resources</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Student Portal</h1>
-            <p className="text-xs text-indigo-300 font-medium">Academic Resources</p>
-          </div>
+        </div>
+        
+        {/* Desktop Notification Icons */}
+        <div className="flex items-center gap-2 mb-6 px-2">
+          <NotificationBell />
+          <PushNotificationToggle />
         </div>
 
         <div className="mb-6 flex-1 overflow-hidden flex flex-col">
