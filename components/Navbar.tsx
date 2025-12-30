@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import FeedbackModal from "./FeedbackModal";
+import NotificationBell from "./NotificationBell";
 
 interface NavbarProps {
   title: string;
@@ -28,6 +29,8 @@ export default function Navbar({ title }: NavbarProps) {
           
           {session?.user && (
             <>
+              <NotificationBell />
+              
               {(session.user as any).role !== "ADMIN" && (
                 <button
                   onClick={() => setIsFeedbackOpen(true)}

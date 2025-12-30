@@ -156,7 +156,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
-    if (session && (session.user as any).role !== "ADMIN") router.push("/dashboard");
+    if (session && session.user.role !== "ADMIN") router.push("/dashboard");
 
     fetchStats();
     fetchSubjects();
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
     } else if (activeTab === "feedback") {
       fetchFeedbacks();
     }
-  }, [activeTab]);
+  }, [activeTab, auditFilter, auditPagination.page, feedbackPagination.page]);
 
   // Debounced user search
   useEffect(() => {
@@ -187,19 +187,12 @@ export default function AdminDashboard() {
     }
   }, [userSearch, userPagination.page]);
 
-  // Refetch feedback when page changes
-  useEffect(() => {
-    if (activeTab === "feedback") {
-      fetchFeedbacks();
-    }
-  }, [feedbackPagination.page]);
-
   const fetchStats = async () => {
     try {
       const res = await fetch("/api/stats");
       if (res.ok) setStats(await res.json());
-    } catch (error) {
-      console.error("Failed to fetch stats:", error);
+    } catch {
+      // Stats fetch failed silently
     }
   };
 
@@ -207,8 +200,8 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/admin/users?type=active");
       if (res.ok) setActiveUsers(await res.json());
-    } catch (error) {
-      console.error("Failed to fetch active users:", error);
+    } catch {
+      // Active users fetch failed silently
     }
   };
 
@@ -226,8 +219,7 @@ export default function AdminDashboard() {
         setAllUsers(data.users);
         setUserPagination(data.pagination);
       }
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
+    } catch {
       toast.error("Failed to load users");
     } finally {
       setLoading(prev => ({ ...prev, users: false }));
@@ -238,8 +230,8 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/subjects");
       if (res.ok) setSubjects(await res.json());
-    } catch (error) {
-      console.error("Failed to fetch subjects:", error);
+    } catch {
+      // Subjects fetch failed silently
     }
   };
 
@@ -248,8 +240,8 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/notes");
       if (res.ok) setNotes(await res.json());
-    } catch (error) {
-      console.error("Failed to fetch notes:", error);
+    } catch {
+      toast.error("Failed to load notes");
     } finally {
       setLoading(prev => ({ ...prev, notes: false }));
     }
@@ -260,8 +252,8 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/admin/approvals");
       if (res.ok) setPendingNotes(await res.json());
-    } catch (error) {
-      console.error("Failed to fetch pending notes:", error);
+    } catch {
+      toast.error("Failed to load pending notes");
     } finally {
       setLoading(prev => ({ ...prev, approvals: false }));
     }
@@ -281,8 +273,7 @@ export default function AdminDashboard() {
         setAuditLogs(data.logs);
         setAuditPagination(data.pagination);
       }
-    } catch (error) {
-      console.error("Failed to fetch audit logs:", error);
+    } catch {
       toast.error("Failed to load audit logs");
     } finally {
       setLoading(prev => ({ ...prev, audit: false }));
@@ -302,20 +293,12 @@ export default function AdminDashboard() {
         setFeedbacks(data.feedbacks);
         setFeedbackPagination(data.pagination);
       }
-    } catch (error) {
-      console.error("Failed to fetch feedback:", error);
+    } catch {
       toast.error("Failed to load feedback");
     } finally {
       setLoading(prev => ({ ...prev, feedback: false }));
     }
   };
-
-  // Refetch audit logs when filter or page changes
-  useEffect(() => {
-    if (activeTab === "audit") {
-      fetchAuditLogs();
-    }
-  }, [auditFilter, auditPagination.page]);
 
   const handleApproval = async (noteId: string, action: "APPROVE" | "REJECT") => {
     const toastId = toast.loading(action === "APPROVE" ? "Approving..." : "Rejecting...");
@@ -667,7 +650,7 @@ export default function AdminDashboard() {
                         <div key={user.id} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             {user.image ? (
-                              <Image src={user.image} alt={user.name || ""} width={32} height={32} className="w-8 h-8 rounded-full flex-shrink-0" />
+                              <Image src={user.image} alt={user.name || ""} width={32} height={32} className="w-8 h-8 rounded-full shrink-0" />
                             ) : (
                               <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-xs shrink-0">
                                 {user.name?.[0]}
@@ -918,7 +901,7 @@ export default function AdminDashboard() {
                               <span className="text-xs text-gray-500 ml-2">({s._count.notes} notes)</span>
                             )}
                           </div>
-                          <div className="flex gap-2 flex-shrink-0">
+                          <div className="flex gap-2 shrink-0">
                             <button
                               onClick={() => setEditingSubject(s)}
                               className="p-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors"
@@ -1093,9 +1076,9 @@ export default function AdminDashboard() {
                                   <td className="p-4">
                                     <div className="flex items-center gap-3">
                                       {user.image ? (
-                                        <Image src={user.image} alt={user.name || ""} width={40} height={40} className="w-10 h-10 rounded-full flex-shrink-0" />
+                                        <Image src={user.image} alt={user.name || ""} width={40} height={40} className="w-10 h-10 rounded-full shrink-0" />
                                       ) : (
-                                        <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-sm flex-shrink-0">
+                                        <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-sm shrink-0">
                                           {user.name?.[0] || "?"}
                                         </div>
                                       )}
@@ -1126,14 +1109,14 @@ export default function AdminDashboard() {
                                           ? "bg-purple-500/20 text-purple-400"
                                           : "bg-gray-600 text-gray-300"
                                       }`}
-                                      disabled={user.id === (session?.user as any)?.id}
+                                      disabled={user.id === session?.user?.id}
                                     >
                                       <option value="STUDENT">Student</option>
                                       <option value="ADMIN">Admin</option>
                                     </select>
                                   </td>
                                   <td className="p-4 text-right">
-                                    {user.id !== (session?.user as any)?.id && (
+                                    {user.id !== session?.user?.id && (
                                       <button
                                         onClick={() => handleDeleteUser(user.id, user.name || "User")}
                                         className="p-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"

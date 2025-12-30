@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAuditLog } from "@/lib/audit";
+import { notifyAllUsers } from "@/lib/notifications";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -36,7 +37,8 @@ export async function POST(req: Request) {
       driveLink,
       subjectId,
       type
-    }
+    },
+    include: { subject: true }
   });
 
   // Create audit log
@@ -51,6 +53,19 @@ export async function POST(req: Request) {
       name: session.user?.name,
       email: session.user?.email,
     },
+  });
+
+  // Notify all users about the new note (exclude the admin who uploaded)
+  await notifyAllUsers({
+    type: "NEW_NOTE",
+    title: "New Note Uploaded! 📚",
+    message: `"${title}" has been added to ${note.subject?.name || 'the library'}`,
+    data: {
+      noteId: note.id,
+      subjectId: note.subjectId,
+      noteType: type,
+    },
+    excludeUserId: (session.user as any).id,
   });
 
   return NextResponse.json(note);

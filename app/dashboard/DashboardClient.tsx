@@ -4,30 +4,53 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, Menu, X, ChevronRight, Star, Clock, BookOpen, Home, Bookmark, Upload, User, ChevronLeft, MessageSquare } from "lucide-react";
+import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, ChevronRight, Clock, BookOpen, Home, Bookmark, Upload, User, ChevronLeft, MessageSquare } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
 import OnboardingModal from "@/components/OnboardingModal";
 import FeedbackModal from "@/components/FeedbackModal";
 import Image from "next/image";
 
+interface Subject {
+  id: string;
+  name: string;
+  code: string | null;
+}
+
+interface Note {
+  id: string;
+  title: string;
+  chapter: string;
+  driveLink: string;
+  type: string;
+  subject?: { name: string };
+}
+
+interface UserProfile {
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  branch?: string | null;
+  year?: string | null;
+}
+
 interface DashboardClientProps {
-  initialSubjects: any[];
-  initialRecentNotes: any[];
-  user: any;
+  initialSubjects: Subject[];
+  initialRecentNotes: Note[];
+  user: UserProfile;
 }
 
 export default function DashboardClient({ initialSubjects, initialRecentNotes, user }: DashboardClientProps) {
   const router = useRouter();
-  const [subjects, setSubjects] = useState<any[]>(initialSubjects);
+  const [subjects] = useState<Subject[]>(initialSubjects);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [notes, setNotes] = useState<any[]>([]);
-  const [recentNotes, setRecentNotes] = useState<any[]>(initialRecentNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [recentNotes] = useState<Note[]>(initialRecentNotes);
   const [filter, setFilter] = useState<"ALL" | "NOTE" | "QP" | "ASSIGNMENT" | "PRACTICAL">("ALL");
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookmarkedNoteIds, setBookmarkedNoteIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<"HOME" | "SUBJECT" | "LIBRARY" | "SUBJECTS_LIST" | "PROFILE">("HOME");
-  const [libraryNotes, setLibraryNotes] = useState<any[]>([]);
+  const [libraryNotes, setLibraryNotes] = useState<Note[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(!user?.branch || !user?.year);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
@@ -53,8 +76,8 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
           }, 5000);
         }
       }
-    } catch (error) {
-      console.error("Failed to check feedback status", error);
+    } catch {
+      // Feedback check failed silently
     }
   };
 
@@ -62,8 +85,8 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
     const res = await fetch("/api/bookmarks");
     if (res.ok) {
       const data = await res.json();
-      setBookmarkedNoteIds(new Set(data.map((b: any) => b.noteId)));
-      setLibraryNotes(data.map((b: any) => b.note));
+      setBookmarkedNoteIds(new Set(data.map((b: { noteId: string }) => b.noteId)));
+      setLibraryNotes(data.map((b: { note: Note }) => b.note));
     }
   };
 
@@ -337,7 +360,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                   key={subject.id}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => { setSelectedSubject(subject.id); setView("SUBJECT"); }}
-                  className="flex-shrink-0 w-40 md:w-auto bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group relative overflow-hidden"
+                  className="shrink-0 w-40 md:w-auto bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group relative overflow-hidden"
                 >
                   <div className={`absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br opacity-10 rounded-bl-full ${
                     index % 3 === 0 ? 'from-blue-500 to-cyan-500' : 
@@ -374,7 +397,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                       rel="noopener noreferrer"
                       className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm active:bg-gray-50"
                     >
-                      <div className={`p-2.5 rounded-xl flex-shrink-0 ${
+                      <div className={`p-2.5 rounded-xl shrink-0 ${
                         note.type === 'QP' ? 'bg-orange-50 text-orange-600' : 
                         note.type === 'ASSIGNMENT' ? 'bg-purple-50 text-purple-600' :
                         'bg-blue-50 text-blue-600'
@@ -385,7 +408,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                         <h4 className="font-semibold text-gray-900 truncate">{note.title}</h4>
                         <p className="text-xs text-gray-500 truncate">{note.subject?.name}</p>
                       </div>
-                      <Download size={18} className="text-gray-400 flex-shrink-0" />
+                      <Download size={18} className="text-gray-400 shrink-0" />
                     </a>
                   ))}
                 </div>
@@ -461,8 +484,8 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setFilter(tab.id as any)}
-                    className={`flex-shrink-0 px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                    onClick={() => setFilter(tab.id as typeof filter)}
+                    className={`shrink-0 px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${
                       filter === tab.id 
                         ? "bg-indigo-600 text-white shadow-md" 
                         : "bg-white text-gray-600 border border-gray-200 active:bg-gray-100"

@@ -52,6 +52,7 @@ model User {
   bookmarks     Bookmark[]
   uploadedNotes Note[]
   feedbacks     Feedback[]
+  notifications Notification[]
 }
 
 model VerificationToken {
@@ -129,5 +130,20 @@ model Feedback {
   message   String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // NEW_NOTE, NOTE_APPROVED, ANNOUNCEMENT
+  title     String
+  message   String
+  data      String?  // JSON with noteId, subjectId, etc.
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
 }
 

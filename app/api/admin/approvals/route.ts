@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit";
+import { notifyAllUsers, notifyUser } from "@/lib/notifications";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -41,13 +42,14 @@ export async function PUT(req: Request) {
   // Get note details for audit log
   const noteDetails = await prisma.note.findUnique({
     where: { id: noteId },
-    include: { uploadedBy: { select: { name: true, email: true } } }
+    include: { uploadedBy: { select: { id: true, name: true, email: true } } }
   });
 
   if (action === "APPROVE") {
     const note = await prisma.note.update({
       where: { id: noteId },
-      data: { status: "APPROVED" }
+      data: { status: "APPROVED" },
+      include: { subject: true }
     });
 
     // Create audit log
@@ -65,6 +67,29 @@ export async function PUT(req: Request) {
         email: session.user?.email,
       },
     });
+
+    // Notify all users about the new approved note
+    await notifyAllUsers({
+      type: "NOTE_APPROVED",
+      title: "New Note Available! 📚",
+      message: `"${note.title}" has been added to ${note.subject?.name || 'the library'}`,
+      data: {
+        noteId: note.id,
+        subjectId: note.subjectId,
+        noteType: note.type,
+      },
+    });
+
+    // Notify the uploader that their note was approved
+    if (noteDetails?.uploadedBy?.id) {
+      await notifyUser({
+        userId: noteDetails.uploadedBy.id,
+        type: "NOTE_APPROVED",
+        title: "Your Note Was Approved! ✅",
+        message: `Your contribution "${note.title}" has been approved and is now available to all users.`,
+        data: { noteId: note.id },
+      });
+    }
 
     return NextResponse.json(note);
   } else if (action === "REJECT") {
