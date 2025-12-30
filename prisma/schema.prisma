@@ -53,6 +53,7 @@ model User {
   uploadedNotes Note[]
   feedbacks     Feedback[]
   notifications Notification[]
+  pushSubscriptions PushSubscription[]
 }
 
 model VerificationToken {
@@ -145,5 +146,17 @@ model Notification {
 
   @@index([userId, read])
   @@index([createdAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String   // Public key
+  auth      String   // Auth secret
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 

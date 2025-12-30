@@ -8,6 +8,7 @@ import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import FeedbackModal from "./FeedbackModal";
 import NotificationBell from "./NotificationBell";
+import PushNotificationToggle from "./PushNotificationToggle";
 
 interface NavbarProps {
   title: string;
@@ -30,6 +31,7 @@ export default function Navbar({ title }: NavbarProps) {
           {session?.user && (
             <>
               <NotificationBell />
+              <PushNotificationToggle />
               
               {(session.user as any).role !== "ADMIN" && (
                 <button

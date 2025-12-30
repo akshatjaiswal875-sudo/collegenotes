@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createAuditLog } from "@/lib/audit";
 import { notifyAllUsers } from "@/lib/notifications";
+import { sendPushToAll } from "@/lib/push";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -67,6 +68,16 @@ export async function POST(req: Request) {
     },
     excludeUserId: (session.user as any).id,
   });
+
+  // Send push notifications to all users
+  await sendPushToAll(
+    {
+      title: "New Note Uploaded! 📚",
+      message: `"${title}" has been added to ${note.subject?.name || 'the library'}`,
+      url: "/dashboard",
+    },
+    (session.user as any).id
+  );
 
   return NextResponse.json(note);
 }

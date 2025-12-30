@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit";
 import { notifyAllUsers, notifyUser } from "@/lib/notifications";
+import { sendPushToAll, sendPushToUser } from "@/lib/push";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -89,7 +90,21 @@ export async function PUT(req: Request) {
         message: `Your contribution "${note.title}" has been approved and is now available to all users.`,
         data: { noteId: note.id },
       });
+
+      // Send push to the uploader
+      await sendPushToUser(noteDetails.uploadedBy.id, {
+        title: "Your Note Was Approved! ✅",
+        message: `Your contribution "${note.title}" is now available to all users.`,
+        url: "/dashboard",
+      });
     }
+
+    // Send push notifications to all users
+    await sendPushToAll({
+      title: "New Note Available! 📚",
+      message: `"${note.title}" has been added to ${note.subject?.name || 'the library'}`,
+      url: "/dashboard",
+    });
 
     return NextResponse.json(note);
   } else if (action === "REJECT") {
