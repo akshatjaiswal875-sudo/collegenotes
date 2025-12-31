@@ -59,7 +59,7 @@ export default function Testimonials({
 
   const fetchTestimonials = async () => {
     try {
-      const res = await fetch("/api/testimonials?limit=6");
+      const res = await fetch("/api/testimonials?limit=10");
       if (res.ok) {
         const result = await res.json();
         setData(result);

@@ -76,9 +76,6 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* Testimonials Section */}
-        <Testimonials variant="landing" autoPlay={true} showStats={true} />
-
         <footer className="mt-20 text-gray-400 text-sm pb-8">
           <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">
             <p>&copy; 2025 College Notes Portal. All rights reserved.</p>
@@ -89,6 +86,9 @@ export default function LandingPage() {
             </div>
           </div>
         </footer>
+
+        {/* Student Reviews Section - At Bottom */}
+        <Testimonials variant="landing" autoPlay={true} showStats={true} />
       </div>
     </main>
   );

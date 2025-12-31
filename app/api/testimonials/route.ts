@@ -5,21 +5,16 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 // Public endpoint - no auth required
-// Returns approved testimonials for landing page and dashboard
+// Returns all feedback/reviews for landing page and dashboard
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get("limit") || "6");
+    const limit = parseInt(searchParams.get("limit") || "10");
 
-    // Fetch approved public testimonials
+    // Fetch all feedback - no approval needed
     const testimonials = await prisma.feedback.findMany({
-      where: {
-        isPublic: true,
-        isApproved: true,
-      },
       take: limit,
       orderBy: [
-        { rating: "desc" },
         { createdAt: "desc" },
       ],
       include: {
@@ -34,12 +29,8 @@ export async function GET(req: Request) {
       },
     });
 
-    // Calculate average rating and total count
+    // Calculate average rating and total count from all reviews
     const stats = await prisma.feedback.aggregate({
-      where: {
-        isPublic: true,
-        isApproved: true,
-      },
       _avg: {
         rating: true,
       },
