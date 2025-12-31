@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   BarChart3, Upload, Book, Users, Plus, FileText, Edit, Trash2, X, 
   CheckCircle, XCircle, Search, ChevronLeft, ChevronRight, 
-  UserCog, Menu, RefreshCw, History, MessageSquare, Star
+  UserCog, Menu, RefreshCw, History, MessageSquare, Star, Eye, EyeOff
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
@@ -34,6 +34,8 @@ interface Feedback {
   rating: number;
   message: string;
   createdAt: string;
+  isPublic: boolean;
+  isApproved: boolean;
   user: {
     name: string | null;
     email: string | null;
@@ -297,6 +299,25 @@ export default function AdminDashboard() {
       toast.error("Failed to load feedback");
     } finally {
       setLoading(prev => ({ ...prev, feedback: false }));
+    }
+  };
+
+  const handleToggleFeedbackPublic = async (feedbackId: string, isPublic: boolean, isApproved: boolean) => {
+    const toastId = toast.loading("Updating...");
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedbackId, isPublic, isApproved }),
+      });
+      if (res.ok) {
+        toast.success(isPublic ? "Feedback made public!" : "Feedback hidden from public", { id: toastId });
+        fetchFeedbacks();
+      } else {
+        toast.error("Failed to update feedback", { id: toastId });
+      }
+    } catch {
+      toast.error("Something went wrong", { id: toastId });
     }
   };
 
@@ -1387,8 +1408,34 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                             <p className="text-gray-300 mb-4 whitespace-pre-wrap">{feedback.message}</p>
-                            <div className="text-xs text-gray-500 text-right">
-                              {new Date(feedback.createdAt).toLocaleDateString()} at {new Date(feedback.createdAt).toLocaleTimeString()}
+                            <div className="flex items-center justify-between">
+                              <button
+                                onClick={() => handleToggleFeedbackPublic(
+                                  feedback.id, 
+                                  !feedback.isPublic, 
+                                  !feedback.isPublic ? true : feedback.isApproved
+                                )}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                  feedback.isPublic && feedback.isApproved
+                                    ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                                    : "bg-gray-600/50 text-gray-400 hover:bg-gray-600"
+                                }`}
+                              >
+                                {feedback.isPublic && feedback.isApproved ? (
+                                  <>
+                                    <Eye size={14} />
+                                    <span>Public</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <EyeOff size={14} />
+                                    <span>Make Public</span>
+                                  </>
+                                )}
+                              </button>
+                              <div className="text-xs text-gray-500">
+                                {new Date(feedback.createdAt).toLocaleDateString()} at {new Date(feedback.createdAt).toLocaleTimeString()}
+                              </div>
                             </div>
                           </div>
                         ))}

@@ -125,12 +125,16 @@ model AuditLog {
 }
 
 model Feedback {
-  id        String   @id @default(cuid())
-  userId    String
-  rating    Int
-  message   String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  userId     String
+  rating     Int
+  message    String
+  createdAt  DateTime @default(now())
+  isPublic   Boolean  @default(false)  // Shown on landing/dashboard testimonials
+  isApproved Boolean  @default(false)  // Admin approved for public display
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isPublic, isApproved])
 }
 
 model Notification {

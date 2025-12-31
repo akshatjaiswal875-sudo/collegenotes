@@ -10,6 +10,7 @@ import OnboardingModal from "@/components/OnboardingModal";
 import FeedbackModal from "@/components/FeedbackModal";
 import NotificationBell from "@/components/NotificationBell";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
+import Testimonials from "@/components/Testimonials";
 import Image from "next/image";
 
 interface Subject {
@@ -430,6 +431,11 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                 </div>
               </div>
             )}
+
+            {/* Student Reviews Section */}
+            <div className="mt-8">
+              <Testimonials variant="dashboard" autoPlay={false} showStats={true} />
+            </div>
           </div>
         )}
 

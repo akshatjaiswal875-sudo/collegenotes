@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { BookOpen, GraduationCap, Library, ClipboardList, FlaskConical } from "lucide-react";
+import Testimonials, { TestimonialsBadge } from "@/components/Testimonials";
 
 export default function LandingPage() {
   const { data: session, status } = useSession();
@@ -55,6 +56,11 @@ export default function LandingPage() {
           </button>
         </div>
 
+        {/* Rating Badge */}
+        <div className="mt-6 flex justify-center">
+          <TestimonialsBadge />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16 text-left">
           {[
             { icon: BookOpen, title: "Lecture Notes", desc: "Organized by subject and chapter" },
@@ -69,6 +75,9 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+
+        {/* Testimonials Section */}
+        <Testimonials variant="landing" autoPlay={true} showStats={true} />
 
         <footer className="mt-20 text-gray-400 text-sm pb-8">
           <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">

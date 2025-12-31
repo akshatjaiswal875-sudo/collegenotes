@@ -92,3 +92,41 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+// Admin: Toggle feedback public/approved status
+export async function PUT(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+
+  if (!user || user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const body = await req.json();
+    const { feedbackId, isPublic, isApproved } = body;
+
+    if (!feedbackId) {
+      return NextResponse.json({ error: "Feedback ID is required" }, { status: 400 });
+    }
+
+    const feedback = await prisma.feedback.update({
+      where: { id: feedbackId },
+      data: {
+        isPublic: isPublic ?? false,
+        isApproved: isApproved ?? false,
+      },
+    });
+
+    return NextResponse.json(feedback);
+  } catch (error) {
+    console.error("Error updating feedback:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
