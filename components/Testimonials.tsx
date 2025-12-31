@@ -89,15 +89,15 @@ export default function Testimonials({
     return (
       <div className={`${variant === "landing" ? "py-16" : "py-6"}`}>
         <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="h-8 w-64 bg-white/10 rounded-lg" />
-          <div className="h-32 w-full max-w-2xl bg-white/10 rounded-xl" />
+          <div className={`h-8 w-64 ${variant === "landing" ? "bg-white/10" : "bg-gray-200"} rounded-lg`} />
+          <div className={`h-32 w-full max-w-2xl ${variant === "landing" ? "bg-white/10" : "bg-gray-200"} rounded-xl`} />
         </div>
       </div>
     );
   }
 
   if (!data || data.testimonials.length === 0) {
-    return null; // Don't show section if no testimonials
+    return null; // Don't show section if no approved testimonials
   }
 
   const { testimonials, stats } = data;
