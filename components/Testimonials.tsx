@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import Image from "next/image";
@@ -32,30 +32,18 @@ interface TestimonialsProps {
   showStats?: boolean;
 }
 
-export default function Testimonials({ 
+export interface TestimonialsRef {
+  refetch: () => Promise<void>;
+}
+
+const Testimonials = forwardRef<TestimonialsRef, TestimonialsProps>(function Testimonials({ 
   variant = "landing", 
   autoPlay = true,
   showStats = true 
-}: TestimonialsProps) {
+}, ref) {
   const [data, setData] = useState<TestimonialsData | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchTestimonials();
-  }, []);
-
-  useEffect(() => {
-    if (!autoPlay || !data || data.testimonials.length <= 1) return;
-    
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => 
-        prev === data.testimonials.length - 1 ? 0 : prev + 1
-      );
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [autoPlay, data]);
 
   const fetchTestimonials = async () => {
     try {
@@ -70,6 +58,29 @@ export default function Testimonials({
       setLoading(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    refetch: fetchTestimonials
+  }));
+
+  useEffect(() => {
+    fetchTestimonials();
+    // Poll for updates every 60 seconds
+    const interval = setInterval(fetchTestimonials, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!autoPlay || !data || data.testimonials.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => 
+        prev === data.testimonials.length - 1 ? 0 : prev + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [autoPlay, data]);
 
   const nextSlide = () => {
     if (!data) return;
@@ -300,7 +311,9 @@ export default function Testimonials({
       </div>
     </section>
   );
-}
+});
+
+export default Testimonials;
 
 // Stats Badge Component - for inline use
 export function TestimonialsBadge() {

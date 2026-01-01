@@ -77,7 +77,7 @@ export default function Navbar({ title }: NavbarProps) {
           </button>
         </div>
       </nav>
-      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} onSubmitSuccess={() => {}} />
     </>
   );
 }

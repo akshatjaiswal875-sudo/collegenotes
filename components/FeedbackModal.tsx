@@ -8,9 +8,10 @@ import toast from "react-hot-toast";
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmitSuccess?: () => void;
 }
 
-export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+export default function FeedbackModal({ isOpen, onClose, onSubmitSuccess }: FeedbackModalProps) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [message, setMessage] = useState("");
@@ -37,6 +38,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
       if (res.ok) {
         toast.success("Thank you for your feedback!");
+        onSubmitSuccess?.();
         onClose();
         setRating(0);
         setMessage("");

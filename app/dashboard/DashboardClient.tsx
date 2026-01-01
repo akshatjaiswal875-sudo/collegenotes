@@ -2,7 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, ChevronRight, Clock, BookOpen, Home, Bookmark, Upload, User, ChevronLeft, MessageSquare } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
@@ -10,7 +10,7 @@ import OnboardingModal from "@/components/OnboardingModal";
 import FeedbackModal from "@/components/FeedbackModal";
 import NotificationBell from "@/components/NotificationBell";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
-import Testimonials from "@/components/Testimonials";
+import Testimonials, { TestimonialsRef } from "@/components/Testimonials";
 import Image from "next/image";
 
 interface Subject {
@@ -44,6 +44,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ initialSubjects, initialRecentNotes, user }: DashboardClientProps) {
   const router = useRouter();
+  const testimonialsRef = useRef<TestimonialsRef>(null);
   const [subjects] = useState<Subject[]>(initialSubjects);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -56,6 +57,10 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
   const [libraryNotes, setLibraryNotes] = useState<Note[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(!user?.branch || !user?.year);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
+  const handleFeedbackSuccess = () => {
+    testimonialsRef.current?.refetch();
+  };
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -196,7 +201,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row relative font-sans pb-16 md:pb-0">
       <WelcomePopup />
       {showOnboarding && <OnboardingModal user={user} onComplete={handleOnboardingComplete} />}
-      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} />
+      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} onSubmitSuccess={handleFeedbackSuccess} />
       
       {/* Desktop Sidebar - Hidden on Mobile */}
       <div className="hidden md:flex fixed md:sticky top-0 h-screen w-72 bg-gradient-to-b from-indigo-900 to-indigo-950 text-white p-6 flex-col z-40 shadow-2xl">
@@ -434,7 +439,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
 
             {/* Student Reviews Section */}
             <div className="mt-8">
-              <Testimonials variant="dashboard" autoPlay={false} showStats={true} />
+              <Testimonials ref={testimonialsRef} variant="dashboard" autoPlay={false} showStats={true} />
             </div>
           </div>
         )}
