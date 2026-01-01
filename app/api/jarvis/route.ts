@@ -29,7 +29,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const token = authHeader?.replace('Bearer ', '') || body?.token;
 
-    if (token !== AUTH_TOKEN) {
+    // Trim whitespace from both tokens for comparison
+    const providedToken = token?.trim();
+    const expectedToken = AUTH_TOKEN?.trim();
+
+    if (providedToken !== expectedToken) {
+      console.log('Auth failed:', { provided: providedToken?.length, expected: expectedToken?.length });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
