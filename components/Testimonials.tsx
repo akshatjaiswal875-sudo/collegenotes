@@ -47,8 +47,12 @@ const Testimonials = forwardRef<TestimonialsRef, TestimonialsProps>(function Tes
 
   const fetchTestimonials = async () => {
     try {
-      const res = await fetch(`/api/testimonials?limit=10&t=${Date.now()}`, {
-        cache: 'no-store'
+      const res = await fetch(`/api/testimonials?limit=50&t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
       if (res.ok) {
         const result = await res.json();
@@ -322,10 +326,27 @@ export function TestimonialsBadge() {
   const [stats, setStats] = useState<{ averageRating: number; totalReviews: number } | null>(null);
 
   useEffect(() => {
-    fetch(`/api/testimonials?limit=1&t=${Date.now()}`, { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => setStats(data.stats))
-      .catch(() => {});
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`/api/testimonials?limit=1&t=${Date.now()}`, { 
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data.stats);
+        }
+      } catch (e) {
+        console.error('Failed to fetch stats:', e);
+      }
+    };
+    fetchStats();
+    // Also poll every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   if (!stats || stats.totalReviews === 0) return null;
