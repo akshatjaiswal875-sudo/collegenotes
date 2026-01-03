@@ -57,6 +57,12 @@ export async function GET(req: Request) {
         averageRating: stats._avg?.rating ? Math.round(stats._avg.rating * 10) / 10 : 0,
         totalReviews: stats._count ?? 0,
       },
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
   } catch (error) {
     console.error("Error fetching testimonials:", error);

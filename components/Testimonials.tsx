@@ -47,7 +47,9 @@ const Testimonials = forwardRef<TestimonialsRef, TestimonialsProps>(function Tes
 
   const fetchTestimonials = async () => {
     try {
-      const res = await fetch("/api/testimonials?limit=10");
+      const res = await fetch(`/api/testimonials?limit=10&t=${Date.now()}`, {
+        cache: 'no-store'
+      });
       if (res.ok) {
         const result = await res.json();
         setData(result);
@@ -65,8 +67,8 @@ const Testimonials = forwardRef<TestimonialsRef, TestimonialsProps>(function Tes
 
   useEffect(() => {
     fetchTestimonials();
-    // Poll for updates every 60 seconds
-    const interval = setInterval(fetchTestimonials, 60000);
+    // Poll for updates every 30 seconds
+    const interval = setInterval(fetchTestimonials, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -320,7 +322,7 @@ export function TestimonialsBadge() {
   const [stats, setStats] = useState<{ averageRating: number; totalReviews: number } | null>(null);
 
   useEffect(() => {
-    fetch("/api/testimonials?limit=1")
+    fetch(`/api/testimonials?limit=1&t=${Date.now()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => setStats(data.stats))
       .catch(() => {});
