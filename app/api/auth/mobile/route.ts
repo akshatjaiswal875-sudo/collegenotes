@@ -33,17 +33,26 @@ export async function POST(req: Request) {
     // Find or create user
     let user = await prisma.user.findUnique({
       where: { email },
+      include: { accounts: true },
     });
 
     if (!user) {
+      // Create user with linked Google account
       user = await prisma.user.create({
         data: {
           email,
           name: name || email.split("@")[0],
           image: picture,
-          provider: "google",
-          providerAccountId: googleId,
+          accounts: {
+            create: {
+              type: "oauth",
+              provider: "google",
+              providerAccountId: googleId,
+              access_token: idToken,
+            },
+          },
         },
+        include: { accounts: true },
       });
     } else {
       // Update user info if changed
@@ -53,7 +62,24 @@ export async function POST(req: Request) {
           name: name || user.name,
           image: picture || user.image,
         },
+        include: { accounts: true },
       });
+
+      // Check if Google account is linked, if not link it
+      const hasGoogleAccount = user.accounts?.some(
+        (acc) => acc.provider === "google"
+      );
+      if (!hasGoogleAccount) {
+        await prisma.account.create({
+          data: {
+            userId: user.id,
+            type: "oauth",
+            provider: "google",
+            providerAccountId: googleId,
+            access_token: idToken,
+          },
+        });
+      }
     }
 
     // Create JWT token for mobile app
