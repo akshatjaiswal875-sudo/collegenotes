@@ -135,6 +135,8 @@ model Feedback {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([isPublic, isApproved])
+  @@index([createdAt(sort: Desc)])
+  @@index([userId])
 }
 
 model Notification {
