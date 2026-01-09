@@ -24,6 +24,10 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   debug: true,
   adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "database",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -60,18 +64,23 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async session({ session, user, token }) {
-      if (session.user) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: session.user.email! }
-        });
-        if (dbUser) {
-          session.user = {
-            ...session.user,
-            role: dbUser.role,
-            id: dbUser.id,
-            mobile: (dbUser as typeof dbUser & { mobile?: string | null }).mobile ?? null,
-          };
+      try {
+        if (session.user?.email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: session.user.email }
+          });
+          if (dbUser) {
+            session.user = {
+              ...session.user,
+              role: dbUser.role,
+              id: dbUser.id,
+              mobile: (dbUser as typeof dbUser & { mobile?: string | null }).mobile ?? null,
+            };
+          }
         }
+      } catch (error) {
+        console.error("Session callback error:", error);
+        // Return session without enrichment rather than failing
       }
       return session;
     }
