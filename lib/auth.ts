@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
   debug: true,
   adapter: PrismaAdapter(prisma),
   session: {
-    strategy: "database",
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   providers: [
@@ -63,24 +63,24 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async session({ session, user, token }) {
+    async jwt({ token, user, account }) {
+      // On initial sign in, add user data to the token
+      if (user) {
+        token.id = user.id;
+        token.role = (user as typeof user & { role?: string }).role || "STUDENT";
+        token.mobile = (user as typeof user & { mobile?: string | null }).mobile ?? null;
+      }
+      return token;
+    },
+    async session({ session, token }) {
       try {
-        if (session.user?.email) {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: session.user.email }
-          });
-          if (dbUser) {
-            session.user = {
-              ...session.user,
-              role: dbUser.role,
-              id: dbUser.id,
-              mobile: (dbUser as typeof dbUser & { mobile?: string | null }).mobile ?? null,
-            };
-          }
+        if (session.user) {
+          session.user.id = token.id as string;
+          session.user.role = (token.role as string) || "STUDENT";
+          session.user.mobile = (token.mobile as string | null) ?? null;
         }
       } catch (error) {
         console.error("Session callback error:", error);
-        // Return session without enrichment rather than failing
       }
       return session;
     }
