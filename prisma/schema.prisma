@@ -53,6 +53,7 @@ model User {
   uploadedNotes Note[]
   notifications Notification[]
   pushSubscriptions PushSubscription[]
+  feedbacks     Feedback[]
 }
 
 model VerificationToken {
@@ -148,5 +149,19 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model Feedback {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating     Int
+  message    String
+  isPublic   Boolean  @default(false)
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
