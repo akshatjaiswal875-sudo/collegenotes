@@ -4,10 +4,9 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, ChevronRight, Clock, BookOpen, Home, Bookmark, Upload, User, ChevronLeft, MessageSquare } from "lucide-react";
+import { Book, FileText, Download, LogOut, Search, GraduationCap, ClipboardList, FlaskConical, ChevronRight, Clock, BookOpen, Home, Bookmark, Upload, User, ChevronLeft } from "lucide-react";
 import WelcomePopup from "@/components/WelcomePopup";
 import OnboardingModal from "@/components/OnboardingModal";
-import FeedbackModal from "@/components/FeedbackModal";
 import NotificationBell from "@/components/NotificationBell";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
 import Testimonials, { TestimonialsRef } from "@/components/Testimonials";
@@ -56,11 +55,6 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
   const [view, setView] = useState<"HOME" | "SUBJECT" | "LIBRARY" | "SUBJECTS_LIST" | "PROFILE">("HOME");
   const [libraryNotes, setLibraryNotes] = useState<Note[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(!user?.branch || !user?.year);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-
-  const handleFeedbackSuccess = () => {
-    testimonialsRef.current?.refetch();
-  };
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -69,25 +63,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
 
   useEffect(() => {
     fetchBookmarks();
-    checkFeedbackStatus();
   }, []);
-
-  const checkFeedbackStatus = async () => {
-    try {
-      const res = await fetch("/api/feedback/check");
-      if (res.ok) {
-        const data = await res.json();
-        if (!data.hasFeedback) {
-          // Show feedback modal after a delay
-          setTimeout(() => {
-            setShowFeedbackModal(true);
-          }, 5000);
-        }
-      }
-    } catch {
-      // Feedback check failed silently
-    }
-  };
 
   const fetchBookmarks = async () => {
     const res = await fetch("/api/bookmarks");
@@ -201,7 +177,6 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row relative font-sans pb-16 md:pb-0">
       <WelcomePopup />
       {showOnboarding && <OnboardingModal user={user} onComplete={handleOnboardingComplete} />}
-      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} onSubmitSuccess={handleFeedbackSuccess} />
       
       {/* Desktop Sidebar - Hidden on Mobile */}
       <div className="hidden md:flex fixed md:sticky top-0 h-screen w-72 bg-gradient-to-b from-indigo-900 to-indigo-950 text-white p-6 flex-col z-40 shadow-2xl">
@@ -257,11 +232,11 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
           </button>
 
           <button
-            onClick={() => setShowFeedbackModal(true)}
+            onClick={() => router.push('/contribute')}
             className="w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center gap-3 mb-6 hover:bg-white/10 text-indigo-100 hover:text-white"
           >
-            <MessageSquare size={20} />
-            <span>Feedback</span>
+            <Upload size={20} />
+            <span>Contribute</span>
           </button>
 
           <h2 className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-4 px-2 flex items-center gap-2">
@@ -731,20 +706,6 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                   <div className="flex-1 text-left">
                     <h3 className="font-semibold text-gray-900">Contribute Notes</h3>
                     <p className="text-xs text-gray-500">Share your study materials</p>
-                  </div>
-                  <ChevronRight size={20} className="text-gray-400" />
-                </button>
-
-                <button
-                  onClick={() => setShowFeedbackModal(true)}
-                  className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm active:bg-gray-50"
-                >
-                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-                    <MessageSquare size={22} />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-gray-900">Give Feedback</h3>
-                    <p className="text-xs text-gray-500">Rate your experience</p>
                   </div>
                   <ChevronRight size={20} className="text-gray-400" />
                 </button>

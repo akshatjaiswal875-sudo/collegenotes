@@ -51,7 +51,6 @@ model User {
   visitLogs     VisitLog[]
   bookmarks     Bookmark[]
   uploadedNotes Note[]
-  feedbacks     Feedback[]
   notifications Notification[]
   pushSubscriptions PushSubscription[]
 }
@@ -122,21 +121,6 @@ model AuditLog {
   @@index([adminId])
   @@index([entityType])
   @@index([timestamp])
-}
-
-model Feedback {
-  id         String   @id @default(cuid())
-  userId     String
-  rating     Int
-  message    String
-  createdAt  DateTime @default(now())
-  isPublic   Boolean  @default(false)  // Shown on landing/dashboard testimonials
-  isApproved Boolean  @default(false)  // Admin approved for public display
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([isPublic, isApproved])
-  @@index([createdAt(sort: Desc)])
-  @@index([userId])
 }
 
 model Notification {

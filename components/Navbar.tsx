@@ -1,12 +1,10 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, MessageSquare } from "lucide-react";
+import { LogOut } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
-import FeedbackModal from "./FeedbackModal";
 import NotificationBell from "./NotificationBell";
 import PushNotificationToggle from "./PushNotificationToggle";
 
@@ -16,10 +14,8 @@ interface NavbarProps {
 
 export default function Navbar({ title }: NavbarProps) {
   const { data: session } = useSession();
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   return (
-    <>
       <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex justify-between items-center sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-indigo-900 dark:text-indigo-400">{title}</h1>
@@ -32,16 +28,6 @@ export default function Navbar({ title }: NavbarProps) {
             <>
               <NotificationBell />
               <PushNotificationToggle />
-              
-              {(session.user as any).role !== "ADMIN" && (
-                <button
-                  onClick={() => setIsFeedbackOpen(true)}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium"
-                >
-                  <MessageSquare size={18} />
-                  <span className="hidden sm:inline">Feedback</span>
-                </button>
-              )}
 
               <Link href="/profile" className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors">
                 <div className="text-right hidden md:block">
@@ -77,7 +63,5 @@ export default function Navbar({ title }: NavbarProps) {
           </button>
         </div>
       </nav>
-      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} onSubmitSuccess={() => {}} />
-    </>
   );
 }
