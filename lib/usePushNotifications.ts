@@ -84,6 +84,11 @@ export function usePushNotifications() {
     try {
       setIsLoading(true);
 
+      if (!VAPID_PUBLIC_KEY) {
+        console.error("VAPID public key is not configured. Set NEXT_PUBLIC_VAPID_PUBLIC_KEY in your environment.");
+        return false;
+      }
+
       // Request permission
       const permission = await Notification.requestPermission();
       setPermission(permission);
