@@ -72,8 +72,22 @@ export default async function StudentDashboard() {
     include: { subject: true }
   });
 
+  const searchableNotes = await prisma.note.findMany({
+    where: { status: "APPROVED" },
+    orderBy: { createdAt: 'desc' },
+    include: { subject: true }
+  });
+
   // Serialize dates for client component
   const serializedRecentNotes = recentNotes.map(note => ({
+    ...note,
+    createdAt: note.createdAt.toISOString(),
+    subject: {
+      ...note.subject,
+    }
+  }));
+
+  const serializedSearchableNotes = searchableNotes.map(note => ({
     ...note,
     createdAt: note.createdAt.toISOString(),
     subject: {
@@ -89,6 +103,7 @@ export default async function StudentDashboard() {
     <DashboardClient 
       initialSubjects={serializedSubjects} 
       initialRecentNotes={serializedRecentNotes}
+      initialSearchableNotes={serializedSearchableNotes}
       user={{
         ...session.user,
         branch: user?.branch,

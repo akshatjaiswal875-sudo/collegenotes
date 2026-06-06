@@ -27,6 +27,10 @@ interface Note {
   subject?: { name: string };
 }
 
+interface SearchableNote extends Note {
+  subjectId: string;
+}
+
 interface UserProfile {
   name: string | null;
   email: string | null;
@@ -38,18 +42,21 @@ interface UserProfile {
 interface DashboardClientProps {
   initialSubjects: Subject[];
   initialRecentNotes: Note[];
+  initialSearchableNotes: SearchableNote[];
   user: UserProfile;
 }
 
-export default function DashboardClient({ initialSubjects, initialRecentNotes, user }: DashboardClientProps) {
+export default function DashboardClient({ initialSubjects, initialRecentNotes, initialSearchableNotes, user }: DashboardClientProps) {
   const router = useRouter();
   const testimonialsRef = useRef<TestimonialsRef>(null);
   const [subjects] = useState<Subject[]>(initialSubjects);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [recentNotes] = useState<Note[]>(initialRecentNotes);
+  const [searchableNotes] = useState<SearchableNote[]>(initialSearchableNotes);
   const [filter, setFilter] = useState<"ALL" | "NOTE" | "QP" | "ASSIGNMENT" | "PRACTICAL">("ALL");
   const [search, setSearch] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookmarkedNoteIds, setBookmarkedNoteIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<"HOME" | "SUBJECT" | "LIBRARY" | "SUBJECTS_LIST" | "PROFILE">("HOME");
@@ -107,6 +114,59 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
   const fetchNotes = async (subjectId: string) => {
     const res = await fetch(`/api/notes?subjectId=${subjectId}`);
     if (res.ok) setNotes(await res.json());
+  };
+
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const searchSuggestions = normalizedSearch
+    ? [
+        ...subjects
+          .filter(subject =>
+            subject.name.toLowerCase().includes(normalizedSearch) ||
+            (subject.code || "").toLowerCase().includes(normalizedSearch)
+          )
+          .slice(0, 5)
+          .map(subject => ({
+            kind: "subject" as const,
+            id: subject.id,
+            label: subject.name,
+            detail: subject.code || "Subject",
+          })),
+        ...searchableNotes
+          .filter(note =>
+            note.title.toLowerCase().includes(normalizedSearch) ||
+            note.chapter.toLowerCase().includes(normalizedSearch) ||
+            note.type.toLowerCase().includes(normalizedSearch) ||
+            (note.subject?.name || "").toLowerCase().includes(normalizedSearch)
+          )
+          .slice(0, 8)
+          .map(note => ({
+            kind: "note" as const,
+            id: note.id,
+            subjectId: note.subjectId,
+            label: note.title,
+            detail: `${note.subject?.name || "Subject"} • ${note.type}`,
+          })),
+      ].slice(0, 10)
+    : [];
+
+  const handleSearchSelect = (item: { kind: "subject" | "note"; id: string; subjectId?: string; label: string; detail: string }) => {
+    setSearch(item.label);
+    setSearchFocused(false);
+
+    if (item.kind === "subject") {
+      setSelectedSubject(item.id);
+      setView("SUBJECT");
+      setFilter("ALL");
+      return;
+    }
+
+    if (item.subjectId) {
+      setSelectedSubject(item.subjectId);
+      setView("SUBJECT");
+      const detail = item.detail.toLowerCase();
+      setFilter(detail.includes("assignment") ? "ASSIGNMENT" : detail.includes("qp") ? "QP" : "ALL");
+    }
   };
 
   const filteredNotes = notes.filter(note => {
@@ -351,6 +411,45 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
             <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <BookOpen size={20} className="text-indigo-600" /> Quick Access
             </h2>
+            <div className="relative mb-4">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="text-gray-400" size={20} />
+              </div>
+              <input
+                type="text"
+                placeholder="Search subjects, notes, or assignments..."
+                className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none shadow-sm bg-white text-gray-900 transition-all placeholder:text-gray-400"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+              />
+              {searchFocused && searchSuggestions.length > 0 && (
+                <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+                  {searchSuggestions.map((item) => (
+                    <button
+                      key={`${item.kind}-${item.id}`}
+                      type="button"
+                      onClick={() => handleSearchSelect(item)}
+                      className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left hover:bg-gray-50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-gray-900">{item.label}</p>
+                        <p className="truncate text-xs text-gray-500">{item.detail}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
+                        {item.kind === "subject" ? "Subject" : "Note"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {searchFocused && search && searchSuggestions.length === 0 && (
+                <div className="absolute z-20 mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500 shadow-xl">
+                  No matches found.
+                </div>
+              )}
+            </div>
             <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible scrollbar-hide">
               {subjects.slice(0, 6).map((subject, index) => (
                 <motion.button
@@ -424,10 +523,46 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
           <div className="md:hidden">
             <MobileHeader title="All Subjects" />
             <div className="p-4 space-y-3">
+              <div className="relative mb-3">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search className="text-gray-400" size={20} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search subjects, notes, or assignments..."
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none shadow-sm bg-white text-gray-900 transition-all placeholder:text-gray-400"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+                />
+                {searchFocused && searchSuggestions.length > 0 && (
+                  <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+                    {searchSuggestions.map((item) => (
+                      <button
+                        key={`${item.kind}-${item.id}`}
+                        type="button"
+                        onClick={() => handleSearchSelect(item)}
+                        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left hover:bg-gray-50"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-gray-900">{item.label}</p>
+                          <p className="truncate text-xs text-gray-500">{item.detail}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
+                          {item.kind === "subject" ? "Subject" : "Note"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
               {subjects.map((subject, index) => (
                 <button
                   key={subject.id}
-                  onClick={() => { setSelectedSubject(subject.id); setView("SUBJECT"); }}
+                  onClick={() => { setSelectedSubject(subject.id); setView("SUBJECT"); setSearch(subject.name); }}
                   className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm active:bg-gray-50"
                 >
                   <div className={`p-3 rounded-xl ${
@@ -444,6 +579,7 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, u
                   <ChevronRight size={20} className="text-gray-400" />
                 </button>
               ))}
+              </div>
             </div>
           </div>
         )}
