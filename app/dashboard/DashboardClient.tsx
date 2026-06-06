@@ -258,6 +258,50 @@ export default function DashboardClient({ initialSubjects, initialRecentNotes, i
           <PushNotificationToggle />
         </div>
 
+        <div className="mb-5 px-2 relative overflow-visible">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search size={18} className="text-indigo-200/80" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search subjects, notes, assignments..."
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder:text-indigo-200/70 outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+            />
+          </div>
+
+          {searchFocused && searchSuggestions.length > 0 && (
+            <div className="absolute left-2 right-2 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl">
+              {searchSuggestions.map((item) => (
+                <button
+                  key={`desktop-${item.kind}-${item.id}`}
+                  type="button"
+                  onClick={() => handleSearchSelect(item)}
+                  className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left hover:bg-gray-50"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-gray-900">{item.label}</p>
+                    <p className="truncate text-xs text-gray-500">{item.detail}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
+                    {item.kind === "subject" ? "Subject" : "Note"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {searchFocused && search && searchSuggestions.length === 0 && (
+            <div className="absolute left-2 right-2 top-full z-50 mt-2 rounded-2xl border border-white/10 bg-white px-4 py-3 text-sm text-gray-500 shadow-2xl">
+              No matches found.
+            </div>
+          )}
+        </div>
+
         <div className="mb-6 flex-1 overflow-hidden flex flex-col">
           <button
             onClick={() => { setSelectedSubject(null); setView("HOME"); }}
